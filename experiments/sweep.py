@@ -1,6 +1,6 @@
-"""Sweep message loss x burstiness x attrition for every strategy; write CSV, figure and table.
+"""v0.2 sweeps on the reference terrain: field interference, channel data rate and UAV memory.
 
-    python experiments/sweep.py            # full sweep (~5 min on 6 cores), then plot
+    python experiments/sweep.py            # ~1,100 missions (~6 min on 6 cores), then plot
     python experiments/sweep.py --plot     # re-plot from results/sweep.csv
 """
 import argparse
@@ -12,30 +12,53 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from swarm_dil import STRATEGIES, Scenario, run
+from swarm_dil import STRATEGIES, Radio, run
+from swarm_dil.sim import reference
 
 OUT = Path(__file__).resolve().parent.parent / "results"
-LOSSES = [round(x, 1) for x in np.arange(0, 1.0, 0.1)]
-BURSTS = [None, 10]
-ATTRITION = [0.0, 0.3]
-SEEDS = range(30)
+SEEDS = range(20)
 COLOURS = {"centralised": "#c0392b", "decentralised": "#2471a3", "partition": "#7f8c8d"}
 
+FREE_CELLS = 1509  # free cells on the reference terrain (asserted in one())
 
-def one(args):
-    strategy, loss, burst, attrition, seed = args
-    sc = Scenario(loss=loss, burst=burst, attrition=attrition)
+INTERFERENCE_DBM = [None, -10, 0, 10, 20]
+RATES_BPS = [9_600, 19_200, 64_000, 250_000]
+MEMORY_FRACTION = [0.05, 0.1, 0.25, 0.5, 1.0]
+
+
+def scenario(experiment, value, attrition):
+    if experiment == "interference":
+        return reference(value, attrition=attrition)
+    if experiment == "rate":
+        return reference(radio=Radio(rate_bps=float(value)))
+    return reference(memory_cells=None if value == 1.0 else round(value * FREE_CELLS))
+
+
+def jobs():
+    for s, v, a, seed in itertools.product(STRATEGIES, INTERFERENCE_DBM, [0.0, 0.3], SEEDS):
+        yield "interference", s, v, a, seed
+    for s, v, seed in itertools.product(STRATEGIES, RATES_BPS, SEEDS):
+        yield "rate", s, v, 0.0, seed
+    for s, v, seed in itertools.product(STRATEGIES, MEMORY_FRACTION, SEEDS):
+        yield "memory", s, v, 0.0, seed
+
+
+def one(job):
+    experiment, strategy, value, attrition, seed = job
+    sc = scenario(experiment, value, attrition)
     r = run(strategy, sc, seed)
-    return dict(strategy=strategy, loss=loss, burst=burst or 0, attrition=attrition, seed=seed,
-                time_all_found=min(r.time_all_found, sc.t_max),
-                success=int(np.isfinite(r.time_all_found)),
-                coverage_300s=round(float(r.coverage[299]), 4))
+    assert r.free.sum() == FREE_CELLS
+    return dict(experiment=experiment, strategy=strategy, value="none" if value is None else value,
+                attrition=attrition, seed=seed,
+                time_reported=min(r.time_all_reported, sc.t_max),
+                time_found=min(r.time_all_found, sc.t_max),
+                success=int(np.isfinite(r.time_all_reported)),
+                bytes_per_uav=round(r.bytes_per_uav, 1), peak_memory=r.peak_memory)
 
 
 def sweep():
-    jobs = list(itertools.product(STRATEGIES, LOSSES, BURSTS, ATTRITION, SEEDS))
-    with Pool(6) as pool:  # 6 of 8 threads: stays inside the 85 % CPU budget
-        rows = pool.map(one, jobs, chunksize=8)
+    with Pool(6) as pool:  # 6 of 8 threads: inside the 85 % CPU budget
+        rows = pool.map(one, list(jobs()), chunksize=4)
     OUT.mkdir(exist_ok=True)
     with open(OUT / "sweep.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=rows[0])
@@ -47,49 +70,56 @@ def load():
     with open(OUT / "sweep.csv") as f:
         rows = list(csv.DictReader(f))
     for r in rows:
-        for k in ("loss", "burst", "attrition", "time_all_found", "coverage_300s"):
+        for k in ("attrition", "time_reported", "time_found", "bytes_per_uav"):
             r[k] = float(r[k])
         r["success"] = int(r["success"])
     return rows
 
 
-def select(rows, **kw):
-    return [r for r in rows if all(r[k] == v for k, v in kw.items())]
+def stat(rows, key="time_reported", fn=np.median, **kw):
+    sel = [r[key] for r in rows if all(str(r[k]) == str(v) for k, v in kw.items())]
+    return fn(sel)
 
 
 def plot(rows):
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
-    for ax, (burst, title) in zip(axes, [(0.0, "independent losses"), (10.0, "bursty losses (mean outage 10 s)")]):
-        for s in STRATEGIES:
-            for attrition, ls in [(0.0, "-"), (0.3, "--")]:
-                med, q1, q3 = [], [], []
-                for loss in LOSSES:
-                    t = [r["time_all_found"] for r in select(rows, strategy=s, loss=loss, burst=burst, attrition=attrition)]
-                    med.append(np.median(t))
-                    q1.append(np.percentile(t, 25))
-                    q3.append(np.percentile(t, 75))
-                label = f"{s}{' + 30 % attrition' if attrition else ''}"
-                ax.plot(LOSSES, med, ls, color=COLOURS[s], label=label, lw=2)
-                if attrition == 0.0:
-                    ax.fill_between(LOSSES, q1, q3, color=COLOURS[s], alpha=0.15)
-        ax.set_title(title)
-        ax.set_xlabel("message loss rate (every link)")
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4.2), sharey=True)
+    xs = ["none" if v is None else str(v) for v in INTERFERENCE_DBM]
+    for s in STRATEGIES:
+        for a, ls in [(0.0, "-"), (0.3, "--")]:
+            y = [stat(rows, experiment="interference", strategy=s, value=x, attrition=a) for x in xs]
+            axes[0].plot(range(len(xs)), y, ls, color=COLOURS[s], lw=2,
+                         label=f"{s}{' + 30 % UAVs lost' if a else ''}")
+        y = [stat(rows, experiment="rate", strategy=s, value=v) for v in RATES_BPS]
+        axes[1].plot(RATES_BPS, y, "-o", color=COLOURS[s], lw=2, label=s)
+        y = [stat(rows, experiment="memory", strategy=s, value=v) for v in MEMORY_FRACTION]
+        axes[2].plot([100 * v for v in MEMORY_FRACTION], y, "-o", color=COLOURS[s], lw=2, label=s)
+    axes[0].set_xticks(range(len(xs)), ["none"] + [f"{v} dBm" for v in INTERFERENCE_DBM[1:]])
+    axes[0].set_xlabel("field interferer power (one emitter mid-area)")
+    axes[0].set_title("interference")
+    axes[1].set_xscale("log")
+    axes[1].set_xticks(RATES_BPS, ["9.6k", "19.2k", "64k", "250k"])
+    axes[1].set_xlabel("shared channel data rate (bit/s)")
+    axes[1].set_title("bandwidth")
+    axes[2].set_xlabel("UAV map memory (% of the search area)")
+    axes[2].set_title("memory")
+    axes[0].set_ylabel("time until C2 knows all 10 targets\n(s, median, capped at 1200)")
+    axes[0].legend(fontsize=7.5)
+    for ax in axes:
         ax.grid(alpha=0.3)
-    axes[0].set_ylabel("time to find all 10 targets (s, median)\ncapped at 1200 s mission limit")
-    axes[0].legend(fontsize=8, loc="upper left")
-    fig.suptitle("20-UAV area search, 1 km², 30 seeds per point", fontsize=11)
+    fig.suptitle("20 UAVs, 1 km² with obstacles, radio model with range, fading and contention; "
+                 "20 seeds per point", fontsize=11)
     fig.tight_layout()
-    fig.savefig(OUT / "fig_time_vs_loss.png", dpi=150)
+    fig.savefig(OUT / "fig_v02.png", dpi=150)
 
 
 def table(rows):
-    lines = ["| strategy | loss | burst | attrition | median time to find all (s) | success within 1200 s |",
-             "|---|---|---|---|---|---|"]
-    for s, loss, burst, att in itertools.product(STRATEGIES, [0.0, 0.5, 0.9], [0.0, 10.0], ATTRITION):
-        sel = select(rows, strategy=s, loss=loss, burst=burst, attrition=att)
-        med = np.median([r["time_all_found"] for r in sel])
-        ok = np.mean([r["success"] for r in sel])
-        lines.append(f"| {s} | {loss:.1f} | {'10 s' if burst else 'iid'} | {att:.0%} | {med:.0f} | {ok:.0%} |")
+    lines = ["| experiment | value | strategy | attrition | median time C2 knows all (s) | success | bytes/UAV/s |",
+             "|---|---|---|---|---|---|---|"]
+    keys = sorted({(r["experiment"], r["value"], r["strategy"], r["attrition"]) for r in rows})
+    for e, v, s, a in keys:
+        kw = dict(experiment=e, value=v, strategy=s, attrition=a)
+        lines.append(f"| {e} | {v} | {s} | {a:.0%} | {stat(rows, **kw):.0f} | "
+                     f"{stat(rows, 'success', np.mean, **kw):.0%} | {stat(rows, 'bytes_per_uav', np.mean, **kw):.0f} |")
     (OUT / "summary.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
 

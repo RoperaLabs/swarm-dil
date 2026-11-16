@@ -1,38 +1,59 @@
-| strategy | loss | burst | attrition | median time to find all (s) | success within 1200 s |
-|---|---|---|---|---|---|
-| centralised | 0.0 | iid | 0% | 166 | 100% |
-| centralised | 0.0 | iid | 30% | 177 | 100% |
-| centralised | 0.0 | 10 s | 0% | 163 | 100% |
-| centralised | 0.0 | 10 s | 30% | 176 | 100% |
-| centralised | 0.5 | iid | 0% | 349 | 100% |
-| centralised | 0.5 | iid | 30% | 410 | 100% |
-| centralised | 0.5 | 10 s | 0% | 594 | 100% |
-| centralised | 0.5 | 10 s | 30% | 758 | 100% |
-| centralised | 0.9 | iid | 0% | 1200 | 10% |
-| centralised | 0.9 | iid | 30% | 1200 | 0% |
-| centralised | 0.9 | 10 s | 0% | 1200 | 7% |
-| centralised | 0.9 | 10 s | 30% | 1200 | 0% |
-| decentralised | 0.0 | iid | 0% | 172 | 100% |
-| decentralised | 0.0 | iid | 30% | 181 | 100% |
-| decentralised | 0.0 | 10 s | 0% | 172 | 100% |
-| decentralised | 0.0 | 10 s | 30% | 181 | 100% |
-| decentralised | 0.5 | iid | 0% | 174 | 100% |
-| decentralised | 0.5 | iid | 30% | 194 | 100% |
-| decentralised | 0.5 | 10 s | 0% | 200 | 100% |
-| decentralised | 0.5 | 10 s | 30% | 213 | 100% |
-| decentralised | 0.9 | iid | 0% | 240 | 100% |
-| decentralised | 0.9 | iid | 30% | 280 | 100% |
-| decentralised | 0.9 | 10 s | 0% | 252 | 100% |
-| decentralised | 0.9 | 10 s | 30% | 248 | 100% |
-| partition | 0.0 | iid | 0% | 230 | 100% |
-| partition | 0.0 | iid | 30% | 300 | 97% |
-| partition | 0.0 | 10 s | 0% | 230 | 100% |
-| partition | 0.0 | 10 s | 30% | 300 | 97% |
-| partition | 0.5 | iid | 0% | 230 | 100% |
-| partition | 0.5 | iid | 30% | 300 | 97% |
-| partition | 0.5 | 10 s | 0% | 230 | 100% |
-| partition | 0.5 | 10 s | 30% | 300 | 97% |
-| partition | 0.9 | iid | 0% | 230 | 100% |
-| partition | 0.9 | iid | 30% | 300 | 97% |
-| partition | 0.9 | 10 s | 0% | 230 | 100% |
-| partition | 0.9 | 10 s | 30% | 300 | 97% |
+| experiment | value | strategy | attrition | median time C2 knows all (s) | success | bytes/UAV/s |
+|---|---|---|---|---|---|---|
+| interference | -10 | centralised | 0% | 556 | 100% | 192 |
+| interference | -10 | centralised | 30% | 697 | 100% | 194 |
+| interference | -10 | decentralised | 0% | 263 | 100% | 235 |
+| interference | -10 | decentralised | 30% | 284 | 100% | 236 |
+| interference | -10 | partition | 0% | 268 | 100% | 35 |
+| interference | -10 | partition | 30% | 588 | 95% | 37 |
+| interference | 0 | centralised | 0% | 488 | 100% | 191 |
+| interference | 0 | centralised | 30% | 700 | 100% | 194 |
+| interference | 0 | decentralised | 0% | 260 | 100% | 235 |
+| interference | 0 | decentralised | 30% | 282 | 100% | 235 |
+| interference | 0 | partition | 0% | 268 | 100% | 35 |
+| interference | 0 | partition | 30% | 588 | 95% | 37 |
+| interference | 10 | centralised | 0% | 625 | 100% | 196 |
+| interference | 10 | centralised | 30% | 732 | 100% | 198 |
+| interference | 10 | decentralised | 0% | 275 | 100% | 236 |
+| interference | 10 | decentralised | 30% | 296 | 100% | 237 |
+| interference | 10 | partition | 0% | 278 | 100% | 35 |
+| interference | 10 | partition | 30% | 588 | 95% | 37 |
+| interference | 20 | centralised | 0% | 702 | 100% | 205 |
+| interference | 20 | centralised | 30% | 802 | 100% | 202 |
+| interference | 20 | decentralised | 0% | 324 | 100% | 240 |
+| interference | 20 | decentralised | 30% | 362 | 100% | 238 |
+| interference | 20 | partition | 0% | 282 | 100% | 35 |
+| interference | 20 | partition | 30% | 595 | 95% | 38 |
+| interference | none | centralised | 0% | 570 | 100% | 191 |
+| interference | none | centralised | 30% | 674 | 100% | 197 |
+| interference | none | decentralised | 0% | 260 | 100% | 235 |
+| interference | none | decentralised | 30% | 283 | 100% | 235 |
+| interference | none | partition | 0% | 268 | 100% | 35 |
+| interference | none | partition | 30% | 588 | 95% | 37 |
+| memory | 0.05 | centralised | 0% | 585 | 100% | 159 |
+| memory | 0.05 | decentralised | 0% | 1200 | 0% | 190 |
+| memory | 0.05 | partition | 0% | 268 | 100% | 34 |
+| memory | 0.1 | centralised | 0% | 570 | 100% | 191 |
+| memory | 0.1 | decentralised | 0% | 1200 | 0% | 252 |
+| memory | 0.1 | partition | 0% | 268 | 100% | 35 |
+| memory | 0.25 | centralised | 0% | 570 | 100% | 191 |
+| memory | 0.25 | decentralised | 0% | 1200 | 0% | 252 |
+| memory | 0.25 | partition | 0% | 268 | 100% | 35 |
+| memory | 0.5 | centralised | 0% | 570 | 100% | 191 |
+| memory | 0.5 | decentralised | 0% | 262 | 100% | 235 |
+| memory | 0.5 | partition | 0% | 268 | 100% | 35 |
+| memory | 1.0 | centralised | 0% | 570 | 100% | 191 |
+| memory | 1.0 | decentralised | 0% | 260 | 100% | 235 |
+| memory | 1.0 | partition | 0% | 268 | 100% | 35 |
+| rate | 19200 | centralised | 0% | 571 | 100% | 194 |
+| rate | 19200 | decentralised | 0% | 272 | 100% | 236 |
+| rate | 19200 | partition | 0% | 268 | 100% | 35 |
+| rate | 250000 | centralised | 0% | 570 | 100% | 191 |
+| rate | 250000 | decentralised | 0% | 260 | 100% | 235 |
+| rate | 250000 | partition | 0% | 268 | 100% | 35 |
+| rate | 64000 | centralised | 0% | 570 | 100% | 191 |
+| rate | 64000 | decentralised | 0% | 260 | 100% | 235 |
+| rate | 64000 | partition | 0% | 268 | 100% | 35 |
+| rate | 9600 | centralised | 0% | 620 | 100% | 197 |
+| rate | 9600 | decentralised | 0% | 298 | 100% | 237 |
+| rate | 9600 | partition | 0% | 268 | 100% | 35 |

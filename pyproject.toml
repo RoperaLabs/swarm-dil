@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swarm-dil"
-version = "0.1.0"
+version = "0.2.0"
 description = "UAV swarm area search under disconnected, intermittent and limited (DIL) links"
 readme = "README.md"
 license = "MIT"
