@@ -1,98 +1,118 @@
 # swarm-dil
 
-**How much does a degraded network cost a UAV swarm's search-and-rescue mission, and which coordination scheme survives it?**
+**Coordination and communication of memory- and bandwidth-limited UAV teams over degraded (DIL: disconnected, intermittent, limited) links.**
 
-![Three coordination strategies searching terrain with obstacles, a field interferer and 30 % of UAVs failing](results/search_dil.gif)
-
-## Operational problem
-
-Swarm coordination algorithms are usually published with perfect communications. In the field the network is **DIL** (*disconnected, intermittent, limited*): terrain blocks links, fading causes outages that last seconds, other emitters raise the noise floor, the channel is shared and slow, onboard memory is finite, and vehicles are lost. A scheme that only works on a healthy network is a liability exactly where swarms are most useful.
-
-`swarm-dil` measures this with a **mission metric**: the time until the command post (C2) **knows** where every target is. A target a UAV has seen but cannot report has not been rescued.
-
-## Model (v0.2)
-
-| Element | Model |
-|---|---|
-| Mission | 20 UAVs search a 1 km² area (25 m cells = sensor footprint) for 10 targets; 10 m/s; launch from the C2 post at the south-west corner; 20-minute limit |
-| Terrain | Rectangular obstacles (ridge, cliff band, buildings): cannot be overflown or searched, are flown around (8-neighbour geodesic routes) and **block line of sight** (−20 dB each) |
-| Radio ([`radio.py`](src/swarm_dil/radio.py)) | 10 dBm radios; log-distance path loss (n = 2.7); **log-normal shadowing with AR(1) time correlation** (σ = 4 dB, ρ = 0.9 per second, so outages last seconds); packet error from SINR. This gives a 50 % delivery range of about 550 m between UAVs and 1.5 km to the C2 antenna (+12 dB) |
-| Interference | Field emitters (x, y, dBm) that raise each receiver's noise floor according to distance and obstacles |
-| Bandwidth | Real message sizes (32 B header, 8 B per located target, 2 B per searched cell); 256 B/s cap per UAV; shared channel with half-duplex **contention** |
-| Memory | Each UAV remembers at most `memory_cells` searched cells and forgets the oldest first |
-| Attrition | Optionally, 30 % of UAVs fail at random times in the first 5 minutes |
-
-**Strategies** ([`sim.py`](src/swarm_dil/sim.py)):
-
-| Strategy | Communication | Decision |
+| Version | Question | Main result |
 |---|---|---|
-| `centralised` | UAV ↔ C2 only | C2 uploads each UAV a 20-cell route, as a ground control station uploads a mission. The UAV flies it even out of link, then returns towards C2 if it has no new orders for 30 s (lost-link failsafe) |
-| `decentralised` | UAV ↔ UAV mesh; C2 listens | UAVs gossip their newest searched cells, located targets and goal claims; clashing claims go to the closest UAV |
-| `partition` | Only reports to C2 | Pre-assigned strips, then anything the UAV has not seen itself |
+| **v0.3** (this) | Which information should agents with tiny memories exchange, in how many bytes and how often, to cross unknown terrain from A to B? | **GRACE**, a protocol derived from the receivers' navigation decisions: same detour as flooding with **~3× fewer bytes**, and unlimited-memory performance with **64 bytes of map memory** |
+| [v0.2](../../tree/v0.2.0) | Which coordination architecture survives a realistic radio, terrain, interference and bounded memory in an area search? | A single ridge makes central control 2.2× slower than a mesh |
+| [v0.1](../../tree/v0.1.0) | How much does message loss cost a search mission? | Bursty loss of 50 % makes central control 3.6× slower |
 
-## Results (v0.2)
+# v0.3: GRACE, telling teammates only what changes their decision
 
-![Time until C2 knows all targets against interference, bandwidth and memory](results/fig_v02.png)
+📄 **[Technical report (PDF, 12 pages): model, theorems and proofs](docs/theory/theory.pdf)** · 🧪 **[Interactive explainer](https://roperalabs.github.io/swarm-dil/)** (try the value-of-information map, the burst-loss calculator and a recorded mission)
 
-Reference terrain, 20 seeds per point, median time until C2 knows all 10 targets:
+![Bytes against detour: GRACE, flooding and silence](docs/theory/fig/pareto.png)
 
-| Condition | centralised | decentralised | partition |
-|---|---|---|---|
-| Clear radio | 570 s | **260 s** | 268 s |
-| + 30 % of UAVs lost | 674 s | **283 s** | 588 s (5 % never complete) |
-| + 100 mW (20 dBm) field interferer | 702 s | 324 s | **282 s** |
-| 9.6 kbit/s channel | 620 s | 298 s | **268 s** |
-| UAVs remember ≤ 25 % of the map | 570 s | **never (0 % within 20 min)** | 268 s |
+## Problem
 
-1. **Terrain, not packet loss, is what breaks central control.** With a realistic radio and a single ridge between the C2 post and part of the area, the mesh swarm gets every target to C2 **2.2× faster** (260 s against 570 s), even though central control uploads whole routes and has a lost-link failsafe. UAVs working behind the ridge must fly back into coverage to report and to receive new routes.
-2. **Losing vehicles is what breaks pre-planning.** Pre-assigned strips match the mesh with a healthy fleet (268 s), but losing 30 % of UAVs more than doubles their time (588 s), and 5 % of missions do not report every target within 20 minutes. The mesh absorbs the same losses with +9 %.
-3. **Interference and bandwidth hurt, but less than geometry.** A 100 mW emitter mid-area slows the mesh by 25 %, and cutting the channel to 9.6 kbit/s slows it by 15 %. Partition, which only sends a few bytes, barely notices either.
-4. **Bounded memory is a cliff, not a slope.** When UAVs can hold 50 % of the map, nothing changes; at 25 % or less, greedy mesh search collapses: UAVs forget nearby searched cells, the gossip refills their memory with the same recent cells, and the swarm loops locally. Central control is immune because C2 holds the map. **Onboard map representation is a first-order design choice** for large areas and small processors.
+A team of 8 agents must go from **A** to **B** across terrain none of them knows, with obstacles, dead-end pockets and radio interference. Each agent has:
 
-Medians over 20 seeds carry noise of roughly ±10 % (the dip of the centralised curve at 0 dBm is noise). Full table: [`results/summary.md`](results/summary.md). Raw data: [`results/sweep.csv`](results/sweep.csv). v0.1 (abstract loss model, 3,600 missions) is tagged [`v0.1.0`](../../tree/v0.1.0).
+- a **vision cone** (5 cells, ±60°) with line of sight, so it only ever sees obstacle surfaces;
+- a **map memory** of a few hundred bytes at most;
+- a **short, fading, shared radio**: path loss, obstacle blockage, seconds-long fades, interferers and a 9.6 kbit/s channel.
+
+Agents are launched one after another, so what the first ones discover can spare the others a detour. **Each agent runs the protocol on board.** The only things it ever receives are its own cone readings, whether its last move succeeded, and the raw bytes teammates broadcast. Its position, map, teammates' positions and knowledge, and link quality are all estimated internally ([`agent.py`](src/swarm_dil/nav/agent.py) never imports the world, and a test checks it).
+
+**Goal:** the least team detour (*regret*: extra distance over the true shortest path) per byte sent.
+
+## Design: derived, not copied
+
+Instead of adapting an existing C2 protocol, every rule of GRACE comes from a result in the [report](docs/theory/theory.pdf):
+
+| Result | Statement | What GRACE does with it |
+|---|---|---|
+| Lemma 1 | Under optimistic planning, learning that a cell is free never changes an action | Free space is never stored or sent |
+| Prop. 1 | A report about an obstacle at path distance $s$ saves at most $2(s-r)^+$ ($r$ = sensor range), with equality in dead ends | Obstacles just ahead of a teammate are worthless; the bottom of a pocket far ahead is worth the most |
+| Lemma 3 | Cells outside the octile ellipse $h(x,y)+h(y,B)\le d_K(x)$ cannot be on the current plan | Forget the tiles farthest outside the ellipse first (Cor. 1: forgetting them is safe) |
+| Def. 3, Prop. 2–3 | Plan-equivalence closure, and an ellipse prior $e^{-m/\mu}$ with self-calibrated $\mu$ | Value tiles a teammate will hit after it reroutes, too |
+| Props. 4–5 | Over a Gilbert–Elliott link, $k$ copies spaced $\tau_m$ are all lost with probability $\pi_B\prod_m(\pi_B+\pi_G\lambda^{\tau_m})$ | No acknowledgements: keep a belief that each teammate lacks each tile and update it per copy, using link reciprocity |
+| Prop. 6 | The optimal number of copies grows with $\log v$ | Important tiles are repeated a few times, trivial ones never sent |
+| Theorem 1 | The per-slot message with the top tiles by expected value above a price $\kappa$ is optimal | One knob, $\kappa$ (detour per byte), traces the bytes–detour front |
+| Cor. 3 | For one-cell-thick sets (what a range sensor sees), the byte-optimal tile side is $\sqrt{8\,b_{\mathrm{id}}}=4$ | 4×4 tiles: 2-byte id plus 16-bit mask, 1 byte per sensed cell; merged by bitwise OR, so duplicates and reordering are harmless |
+
+Each closed form is checked numerically in [`tests/test_nav.py`](tests/test_nav.py): Monte Carlo of the burst-loss chain, brute force for $k^\star$, exact tile counts, and the ellipse lemma and value bound on random terrains.
+
+## Results (20 random terrains per point, error bars = 1 s.e.)
+
+| Comparison | Result |
+|---|---|
+| Same detour as tile flooding | **2.9–3.3× fewer bytes** (paired difference in regret −0.001 ± 0.013 at 9.6 vs 27.3 kB) |
+| Against flooding raw cells | **~6× fewer bytes** for the same detour |
+| Detour removed per kB (vs silence) | GRACE 0.013–0.026, tile flooding 0.002–0.007 |
+| Lowest detour | Flooding at 64 B/slot: 0.181 with 61 kB; GRACE: 0.199 with 12.7 kB (5.1× fewer bytes) |
+| **64 bytes of map memory per agent** | GRACE keeps its unlimited-memory regret (0.220 vs 0.212). Flooding degrades to 0.59–2.13 (worse than silence, 18 % of agents lost) because irrelevant tiles evict useful ones; GRACE with oldest-first forgetting reaches 0.382 |
+| Two interferers at 0 dBm | GRACE matches 16 B/slot flooding (0.286 vs 0.287) with 2.6× fewer bytes, and **spends less by itself** as links degrade (9.6 → 7.2 kB) |
+
+![Bounded memory](docs/theory/fig/memory.png)
+
+**What each component buys, honestly.**
+- **Loss model:** without it the protocol never repairs a loss and stalls at a regret of 0.253, whatever its budget.
+- **Relevance-aware forgetting:** decisive under tight memory.
+- **Goal relevance for *transmission*:** in this scenario its front lies on GRACE's own front within error bars. A short convoy along similar routes makes most tiles relevant to someone, so we do not claim a gain there yet.
+
+Full table: [`results/v3/summary.md`](results/v3/summary.md). Raw data: [`results/v3/study.csv`](results/v3/study.csv).
 
 ## Limitations
 
-- **2-D world:** rectangular obstacles, no relief (DEM), fixed altitude, no wind, no energy budget or battery.
-- **Perfect sensor:** a UAV in the target's cell always sees it; no false alarms. The prior over target location is uniform.
-- **Simplified network:** idealised contention (no hidden nodes, no CSMA collisions), no multi-hop routing beyond gossip, and no positioning error (GNSS is assumed perfect).
-- **Simple strategies:** CBBA, CC-OPI ([arXiv:2609.19208](https://arxiv.org/abs/2609.19208)) and learned policies are planned as baselines.
+- **World model:** 2-D grid with static obstacles, perfect localisation and identical agents. The link memory $\lambda$ is a fixed design constant.
+- **Theory assumptions:** the ellipse prior assumes an exponential cost rise, and the value bound assumes detection within path distance $r$ ahead. Bounded memory voids the completeness guarantee.
+- **Simulated radio:** the next step is to run the same agent code over Zenoh with `tc netem` and in PX4 SITL.
+- **On-board compute:** relevance prediction runs one shortest-path search per teammate per round. Fine on a 48×48 grid; it needs incremental updates to scale up.
 
 ## Reproduce
 
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[plot,test]"
-pytest                                  # 13 tests, ~20 s
-python experiments/sweep.py             # ~1,100 missions, ~6 min on 6 cores -> results/
-python experiments/animate.py           # results/search_dil.gif
+pytest                                   # 31 tests
+python experiments/v3_study.py           # 1,520 missions, ~45 min on 6 cores (resumable)
+python experiments/v3_study.py --plot    # figures and tables only
+tectonic docs/theory/theory.tex          # rebuild the PDF (any LaTeX engine works)
 ```
 
-Every mission is seeded (`run(strategy, scenario, seed)`), so results are bit-for-bit reproducible.
+Every mission is seeded, so results are bit-for-bit reproducible.
+
+```python
+from swarm_dil.nav import Mission, run
+o = run(Mission(protocol="grace", price=0.2, memory_tiles=16), seed=0)
+o.regret, o.bytes_sent.sum(), o.arrival_rate
+```
+
+---
+
+# v0.2: area search under a realistic radio
+
+![Time until C2 knows all targets against interference, bandwidth and memory](results/fig_v02.png)
+
+In this study, 20 UAVs search 1 km² with obstacles, a physical radio model ([`radio.py`](src/swarm_dil/radio.py): path loss, correlated shadowing, line-of-sight blockage, interferers, contention), byte budgets and bounded memory. They are compared under three coordination schemes ([`sim.py`](src/swarm_dil/sim.py)). Median time until C2 knows all 10 targets:
+
+| Condition | centralised | decentralised | partition |
+|---|---|---|---|
+| Clear radio | 570 s | **260 s** | 268 s |
+| + 30 % of UAVs lost | 674 s | **283 s** | 588 s |
+| + 20 dBm field interferer | 702 s | 324 s | **282 s** |
+| UAVs remember ≤ 25 % of the map | 570 s | **never** | 268 s |
+
+Terrain, not packet loss, breaks central control. Losing vehicles breaks pre-planning. Bounded memory is a cliff for greedy mesh search, and that cliff motivated v0.3's relevance-aware memory. Reproduce with `python experiments/sweep.py`; tables in [`results/summary.md`](results/summary.md).
 
 ### Watch a run in TAK
 
-`stream_cot.py` replays a mission as **Cursor on Target** events. UAVs appear as friendly UAV tracks, and targets appear as neutral ground points **when C2 learns about them**. Events go to the standard TAK situational-awareness multicast group (`239.2.3.1:6969`), so ATAK, WinTAK or iTAK on the same LAN display it with no server:
-
-```bash
-python experiments/stream_cot.py --strategy decentralised --speedup 10
-```
-
-Coordinates are synthetic: an arbitrary 1 km square in an unpopulated mountain area.
-
-## Use as a library
-
-```python
-from swarm_dil import Radio, run
-from swarm_dil.sim import reference
-sc = reference(interferer_dbm=10, attrition=0.3, memory_cells=750, radio=Radio(rate_bps=19_200))
-r = run("decentralised", sc, seed=0)
-r.time_all_reported, r.bytes_per_uav, r.peak_memory
-```
+`python experiments/stream_cot.py --strategy decentralised --speedup 10` replays a v0.2 mission as **Cursor on Target**. It sends to the TAK situational-awareness multicast group (`239.2.3.1:6969`), so ATAK, WinTAK or iTAK on the same LAN display it. Coordinates are synthetic.
 
 ## Responsible use
 
-This is open research by Ropera Labs on the coordination of autonomous systems over degraded networks, aimed at dual-use applications such as search and rescue, emergency response and infrastructure inspection. Interference is modelled as a generic raised noise floor, not as an attack technique. The project uses only synthetic data and public-domain methods, and contains no weapon, targeting or vehicle-specific control code. We believe it falls under the basic-research and public-domain exemptions of Regulation (EU) 2021/821. Please use it in line with international humanitarian law and your local regulations.
+This is open, basic research by Ropera Labs on information-efficient coordination of autonomous systems over degraded networks, aimed at dual-use applications such as search and rescue, emergency response and infrastructure inspection. Interference is modelled as a generic raised noise floor, not as an attack technique. The project uses only synthetic data and contains no weapon, targeting or vehicle-specific control code. We believe it falls under the basic-research and public-domain exemptions of Regulation (EU) 2021/821. Please use it in line with international humanitarian law and your local regulations.
 
 ## Licence
 

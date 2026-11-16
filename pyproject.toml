@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swarm-dil"
-version = "0.2.0"
-description = "UAV swarm area search under disconnected, intermittent and limited (DIL) links"
+version = "0.3.0"
+description = "Coordination and communication of memory- and bandwidth-limited UAV teams over degraded (DIL) links"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Ropera Labs" }]
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.24"]
+dependencies = ["numpy>=1.24", "scipy>=1.11"]
 
 [project.optional-dependencies]
 plot = ["matplotlib>=3.7"]

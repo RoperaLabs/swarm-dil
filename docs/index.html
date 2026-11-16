@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GRACE explained</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+<style>
+:root{--bg:#fbfbfa;--fg:#1d2328;--muted:#5d6d7e;--card:#fff;--line:#d5dbdb;--accent:#2471a3;--warn:#c0392b;--ok:#1e8449}
+@media (prefers-color-scheme:dark){:root{--bg:#14181b;--fg:#e6e9eb;--muted:#9aa7b1;--card:#1c2226;--line:#2f383e;--accent:#5dade2;--warn:#ec7063;--ok:#58d68d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.9rem;margin:.2em 0}h2{margin-top:2.2em;border-top:1px solid var(--line);padding-top:1em}
+.lead{color:var(--muted);font-size:1.05rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin:16px 0}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.controls{flex:1 1 260px;min-width:240px}
+.controls label{display:block;font-size:.9rem;color:var(--muted);margin-top:8px}
+.controls input[type=range]{width:100%}
+canvas{max-width:100%;border:1px solid var(--line);border-radius:6px;background:var(--card);touch-action:none}
+.out{font-variant-numeric:tabular-nums;font-weight:600}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--line);font-size:.8rem;margin-right:4px}
+img{max-width:100%;border-radius:6px;background:#fff}
+a{color:var(--accent)}
+button{font:inherit;padding:4px 12px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.legend span{display:inline-block;width:12px;height:12px;border-radius:2px;margin:0 4px 0 12px;vertical-align:middle}
+</style>
+</head>
+<body>
+<main>
+<p class="pill">Ropera Labs · swarm-dil v0.3</p>
+<h1>GRACE: telling teammates only what changes their decision</h1>
+<p class="lead">A team of agents crosses unknown terrain from A to B. Each sees through a short vision cone, remembers a few hundred bytes, and talks over short, fading radio links. GRACE (<em>Goal-Relevant Adaptive Compressed Exchange</em>) decides what to send, in how many bytes and how many times, from the receivers' navigation decisions. Full derivations: <a href="theory/theory.pdf">technical report (PDF)</a> · code: <a href="https://github.com/RoperaLabs/swarm-dil">github.com/RoperaLabs/swarm-dil</a>.</p>
+
+<h2>1 · Only obstacles matter, and only some of them</h2>
+<p>Agents plan optimistically: unknown cells are assumed free. Then <strong>learning that a cell is free never changes a decision</strong> (Lemma 1), so free space is never stored or sent. And a report about an obstacle that lies on a teammate's plan at path distance $s$ saves at most</p>
+$$0 \le W \le 2\,(s-r)^+ ,$$
+<p>where $r$ is the teammate's sensor range (Proposition 1): an obstacle just ahead is worthless (the teammate is about to see it), while the bottom of a pocket far ahead is worth up to twice its distance. Cells outside the octile ellipse $h(x,y)+h(y,B)\le d_K(x)$ cannot be on the current plan (Lemma 3), so they are the first to be forgotten.</p>
+
+<div class="card">
+<div class="row">
+<canvas id="voi" width="480" height="480"></canvas>
+<div class="controls">
+<p style="margin-top:0"><strong>Try it.</strong> Click cells to add or remove obstacles. Shift-click (or the toggle) to move the receiver <em>x</em>. The sender knows every obstacle; the receiver knows none.</p>
+<button id="mode">Mode: edit obstacles</button> <button id="reset">Reset</button>
+<label>receiver sensor range r = <span class="out" id="rv"></span> cells<input id="r" type="range" min="1" max="10" value="3"></label>
+<label>expected cost rise μ = <span class="out" id="muv"></span> cells<input id="mu" type="range" min="1" max="20" value="4"></label>
+<p class="legend"><span style="background:#2471a3"></span>plan rounds of the closure<br><span style="background:#c0392b"></span>tile value (darker = more)<span style="background:rgba(36,113,163,.12)"></span>ellipse</p>
+<p>Value of each 4×4 tile for the receiver:</p>
+<div id="voiOut" class="out"></div>
+</div></div></div>
+
+<h2>2 · How many copies, and when</h2>
+<p>Without acknowledgements, a sender keeps a belief that each teammate does <em>not</em> yet know a tile, and lowers it with each copy. Links fade in bursts, modelled as a Gilbert–Elliott chain with loss $\pi_B$ and memory $\lambda=1-p-q$. The probability that $k$ copies spaced $\tau$ slots apart are all lost is (Proposition 5)</p>
+$$\Pr[\text{all lost}]=\pi_B\,\big(\pi_B+\pi_G\lambda^{\tau}\big)^{k-1}.$$
+<p>With bursty links, back-to-back repeats are almost useless. The number of copies worth sending grows only with the logarithm of the value (Proposition 6).</p>
+<div class="card"><div class="row">
+<canvas id="ge" width="480" height="300"></canvas>
+<div class="controls">
+<label>link loss π<sub>B</sub> = <span class="out" id="pbv"></span><input id="pb" type="range" min="0.05" max="0.9" step="0.01" value="0.3"></label>
+<label>mean outage 1/q = <span class="out" id="bv"></span> slots<input id="bl" type="range" min="1" max="40" step="0.5" value="8"></label>
+<label>spacing τ = <span class="out" id="tv"></span> slots<input id="tau" type="range" min="1" max="60" value="2"></label>
+<label>value of the tile v = <span class="out" id="vv"></span> cells of detour<input id="val" type="range" min="1" max="200" value="40"></label>
+<label>price κ = <span class="out" id="kv"></span> cells per byte (a tile is 4 B)<input id="kap" type="range" min="0.05" max="5" step="0.05" value="0.5"></label>
+<p>λ = <span class="out" id="lam"></span> · copies worth sending k* = <span class="out" id="ks"></span><br>
+P(all k* lost) = <span class="out" id="pl"></span> (independent losses would give <span class="out" id="pli"></span>)<br>
+spacing for near-independence (ε = 0.1): τ ≥ <span class="out" id="tsp"></span> slots</p>
+</div></div></div>
+
+<h2>3 · What goes in each byte</h2>
+<p>A vision cone with line of sight only reveals obstacle <em>surfaces</em>, sets one cell thick. Sending them as $s\times s$ tiles (2-byte id plus $s^2$-bit mask) costs $(2+s^2/8)/s$ bytes per cell, minimised at $s^\star=\sqrt{8\cdot 2}=4$: one byte per cell, half the cost of listing cells (Corollary 3). Tiles merge by bitwise OR, a semilattice, so duplicates, reordering and relaying never corrupt knowledge.</p>
+
+<h2>4 · A recorded mission</h2>
+<div class="card">
+<canvas id="replay" width="480" height="480"></canvas>
+<div style="margin-top:8px"><button id="play">Play</button> <input id="step" type="range" min="0" max="0" value="0" style="width:60%;vertical-align:middle"> <span class="out" id="stepv"></span></div>
+<p class="legend"><span style="background:#5d6d7e"></span>obstacles (ground truth)<span style="background:#2471a3"></span>agents and vision cones<span style="background:#e67e22"></span>packets delivered this second<span style="background:none;border:1.5px solid #1e8449"></span>tiles remembered by agent 0</p>
+<p id="replayInfo" class="lead"></p>
+</div>
+
+<h2>5 · Results</h2>
+<p>Each agent runs GRACE internally and receives only its own cone readings, the outcome of its moves, and raw bytes from teammates. Figures from the simulation study, with 20 random terrains per point:</p>
+<img src="theory/fig/pareto.png" alt="Bytes against detour for GRACE, flooding and silence">
+<img src="theory/fig/interference.png" alt="Detour and bytes against field interference">
+<img src="theory/fig/memory.png" alt="Detour and bytes against on-board memory">
+<img src="theory/fig/theory_checks.png" alt="Theory against Monte Carlo, and bytes per cell against tile size">
+<p class="lead">Open research for dual-use applications such as search and rescue. Synthetic data only.</p>
+</main>
+
+<script>
+const DIRS=[[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]], S2=Math.SQRT2;
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const oct=(dx,dy)=>{dx=Math.abs(dx);dy=Math.abs(dy);return Math.max(dx,dy)+(S2-1)*Math.min(dx,dy)};
+
+// cost-to-go on an n x n grid (Dijkstra, 8-connected, no corner cutting)
+function field(n,blocked,goal){
+  const D=new Float64Array(n*n).fill(Infinity),done=new Uint8Array(n*n);
+  D[goal[0]*n+goal[1]]=0;
+  for(;;){let u=-1,b=Infinity;for(let k=0;k<n*n;k++)if(!done[k]&&D[k]<b){b=D[k];u=k}
+    if(u<0)break;done[u]=1;const x=(u/n)|0,y=u%n;
+    for(const[dx,dy]of DIRS){const tx=x+dx,ty=y+dy;if(tx<0||ty<0||tx>=n||ty>=n)continue;
+      const v=tx*n+ty;if(blocked[v]||blocked[u])continue;
+      if(dx&&dy&&(blocked[tx*n+y]||blocked[x*n+ty]))continue;
+      const c=D[u]+(dx&&dy?S2:1);if(c<D[v])D[v]=c}}
+  return D}
+function descend(n,f,start,goal){const p=[[start[0],start[1],0]];let[x,y]=start,arc=0;
+  for(let it=0;it<4*n&&!(x==goal[0]&&y==goal[1]);it++){let best=Infinity,nx=null;
+    for(const[dx,dy]of DIRS){const tx=x+dx,ty=y+dy;if(tx<0||ty<0||tx>=n||ty>=n)continue;
+      if(f[tx*n+ty]<f[x*n+y]){const c=(dx&&dy?S2:1)+f[tx*n+ty];if(c<best){best=c;nx=[tx,ty,c-f[tx*n+ty]]}}}
+    if(!nx)break;x=nx[0];y=nx[1];arc+=nx[2];p.push([x,y,arc])}
+  return p}
+
+// ---------------------------------------------------------------- widget 1: value of information
+(function(){
+  const n=24,TS=4,cv=document.getElementById('voi'),g=cv.getContext('2d'),C=cv.width/n;
+  let obs=new Uint8Array(n*n),rx=[2,2];const goal=[21,21];let moveMode=false;
+  function preset(){obs.fill(0);for(let i=9;i<17;i++){obs[i*n+16]=1;obs[16*n+i]=1}for(let i=4;i<8;i++)obs[i*n+11]=1;}
+  preset();
+  const R=document.getElementById('r'),MU=document.getElementById('mu');
+  function draw(){
+    const r=+R.value,mu=+MU.value;document.getElementById('rv').textContent=r;document.getElementById('muv').textContent=mu;
+    g.fillStyle=css('--card');g.fillRect(0,0,cv.width,cv.height);
+    const D0=oct(goal[0]-rx[0],goal[1]-rx[1]);
+    for(let x=0;x<n;x++)for(let y=0;y<n;y++){if(oct(x-rx[0],y-rx[1])+oct(goal[0]-x,goal[1]-y)<=D0+1e-9){g.fillStyle='rgba(36,113,163,.12)';g.fillRect(x*C,(n-1-y)*C,C,C)}}
+    // closure
+    const tileOf=k=>{const x=(k/n)|0,y=k%n;return ((x/TS)|0)*100+((y/TS)|0)};
+    const value=new Map(),known=new Uint8Array(n*n),paths=[];
+    for(let round=0;round<6;round++){
+      const f=field(n,known,goal),p=descend(n,f,rx,goal);paths.push(p);const hits=new Map();
+      for(const[x,y,arc]of p){const k=x*n+y;if(obs[k]&&!known[k]){const t=tileOf(k);if(!hits.has(t))hits.set(t,arc)}}
+      if(!hits.size)break;
+      for(const[t,arc]of hits){value.set(t,Math.max(value.get(t)||0,2*Math.max(0,arc-r)));
+        for(let k=0;k<n*n;k++)if(obs[k]&&tileOf(k)==t)known[k]=1}}
+    // ellipse prior for the remaining tiles
+    const tiles=new Map();for(let k=0;k<n*n;k++)if(obs[k]){const t=tileOf(k);if(!tiles.has(t))tiles.set(t,[]);tiles.get(t).push(k)}
+    for(const[t,cells]of tiles){if(value.has(t))continue;let m=Infinity,h=Infinity;
+      for(const k of cells){const x=(k/n)|0,y=k%n;m=Math.min(m,oct(x-rx[0],y-rx[1])+oct(goal[0]-x,goal[1]-y)-D0);h=Math.min(h,oct(x-rx[0],y-rx[1]))}
+      value.set(t,Math.exp(-Math.max(m,0)/mu)*2*Math.max(0,h-r))}
+    const vmax=Math.max(1,...value.values());
+    for(let k=0;k<n*n;k++)if(obs[k]){const x=(k/n)|0,y=k%n,v=value.get(tileOf(k))/vmax;
+      g.fillStyle=`rgba(192,57,43,${0.25+0.75*v})`;g.fillRect(x*C+1,(n-1-y)*C+1,C-2,C-2)}
+    g.strokeStyle=css('--line');g.lineWidth=1;for(let i=0;i<=n;i+=TS){g.beginPath();g.moveTo(i*C,0);g.lineTo(i*C,cv.height);g.moveTo(0,i*C);g.lineTo(cv.width,i*C);g.stroke()}
+    paths.forEach((p,i)=>{g.strokeStyle=`rgba(36,113,163,${1-i*0.15})`;g.lineWidth=i?1.5:3;g.setLineDash(i?[5,4]:[]);g.beginPath();
+      p.forEach(([x,y],j)=>{const X=x*C+C/2,Y=(n-1-y)*C+C/2;j?g.lineTo(X,Y):g.moveTo(X,Y)});g.stroke()});g.setLineDash([]);
+    g.fillStyle=css('--fg');g.beginPath();g.arc(rx[0]*C+C/2,(n-1-rx[1])*C+C/2,C/2.4,0,7);g.fill();
+    g.fillStyle=css('--ok');g.fillRect(goal[0]*C+2,(n-1-goal[1])*C+2,C-4,C-4);
+    g.font='bold 13px system-ui';g.fillStyle=css('--fg');g.fillText('x',rx[0]*C+C,(n-1-rx[1])*C);g.fillText('B',goal[0]*C+C,(n-1-goal[1])*C);
+    const rows=[...value].filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t,v])=>`tile (${(t/100)|0},${t%100}): ${v.toFixed(1)}`);
+    document.getElementById('voiOut').innerHTML=(rows.join('<br>')||'no tile changes the plan')+`<br><span style="font-weight:400;color:${css('--muted')}">${paths.length} closure round(s)</span>`}
+  function cell(e){const b=cv.getBoundingClientRect();return[Math.floor((e.clientX-b.left)/b.width*n),n-1-Math.floor((e.clientY-b.top)/b.height*n)]}
+  cv.addEventListener('pointerdown',e=>{const[x,y]=cell(e);if(x<0||y<0||x>=n||y>=n)return;
+    if(moveMode||e.shiftKey){if(!obs[x*n+y])rx=[x,y]}else if(!(x==goal[0]&&y==goal[1])&&!(x==rx[0]&&y==rx[1]))obs[x*n+y]^=1;draw()});
+  document.getElementById('mode').onclick=e=>{moveMode=!moveMode;e.target.textContent='Mode: '+(moveMode?'move receiver':'edit obstacles')};
+  document.getElementById('reset').onclick=()=>{preset();rx=[2,2];draw()};
+  R.oninput=MU.oninput=draw;draw();
+})();
+
+// ---------------------------------------------------------------- widget 2: copies over a bursty link
+(function(){
+  const cv=document.getElementById('ge'),g=cv.getContext('2d');
+  const $=id=>document.getElementById(id);
+  function draw(){
+    const pb=+$('pb').value,bl=+$('bl').value,tau=+$('tau').value,v=+$('val').value,kap=+$('kap').value;
+    const q=1/bl,p=pb*q/(1-pb),lam=1-p-q;
+    $('pbv').textContent=pb.toFixed(2);$('bv').textContent=bl;$('tv').textContent=tau;$('vv').textContent=v;$('kv').textContent=kap.toFixed(2);
+    if(p>1||lam<=-1){$('lam').textContent='invalid (shorter outages needed)';return}
+    const rho=pb+(1-pb)*Math.pow(lam,tau),cost=4*kap;
+    let k=0;if(v*(1-pb)>=cost){k=1;while(k<60&&v*pb*Math.pow(rho,k-1)*(1-rho)>=cost)k++}
+    $('lam').textContent=lam.toFixed(3);$('ks').textContent=k;
+    $('pl').textContent=k?(pb*Math.pow(rho,k-1)).toExponential(2):'1';$('pli').textContent=k?Math.pow(pb,k).toExponential(2):'1';
+    $('tsp').textContent=lam>0?Math.max(1,Math.ceil(Math.log(0.1*pb/(1-pb))/Math.log(lam))):1;
+    const W=cv.width,H=cv.height,L=46,B=30,K=10,ymin=-6;
+    g.fillStyle=css('--card');g.fillRect(0,0,W,H);g.strokeStyle=css('--line');g.fillStyle=css('--muted');g.font='11px system-ui';
+    const X=kk=>L+(kk-1)/(K-1)*(W-L-12),Y=pr=>H-B-(Math.log10(Math.max(pr,1e-6))-ymin)/(-ymin)*(H-B-10);
+    for(let e=0;e>=ymin;e--){g.beginPath();g.moveTo(L,Y(10**e));g.lineTo(W-12,Y(10**e));g.stroke();g.fillText('1e'+e,6,Y(10**e)+4)}
+    for(let kk=1;kk<=K;kk++)g.fillText(kk,X(kk)-3,H-B+16);g.fillText('copies k',W/2-20,H-4);
+    const series=[[t=>pb*Math.pow(rho,t-1),css('--accent'),'spacing τ'],[t=>pb*Math.pow(pb+(1-pb)*lam,t-1),css('--warn'),'back-to-back'],[t=>Math.pow(pb,t),css('--muted'),'independent']];
+    series.forEach(([fn,col,lab],i)=>{g.strokeStyle=col;g.lineWidth=2;g.beginPath();for(let kk=1;kk<=K;kk++){kk==1?g.moveTo(X(kk),Y(fn(kk))):g.lineTo(X(kk),Y(fn(kk)))}g.stroke();
+      g.fillStyle=col;g.fillText(lab,W-110,20+14*i)});
+    if(k){g.fillStyle=css('--ok');g.beginPath();g.arc(X(Math.min(k,K)),Y(pb*Math.pow(rho,k-1)),5,0,7);g.fill()}}
+  ['pb','bl','tau','val','kap'].forEach(id=>$(id).oninput=draw);draw();
+})();
+
+// ---------------------------------------------------------------- widget 3: replay
+(function(){
+  const cv=document.getElementById('replay'),g=cv.getContext('2d'),slider=document.getElementById('step');
+  let R=null,timer=null;
+  fetch('replay.json').then(r=>r.json()).then(d=>{R=d;slider.max=d.steps.length-1;
+    document.getElementById('replayInfo').textContent=`GRACE, ${d.steps[0].pos.length} agents, ${d.steps.length} s, team regret ${(100*d.regret).toFixed(1)} %, ${(d.bytes/1000).toFixed(1)} kB sent in total.`;draw()})
+   .catch(()=>{document.getElementById('replayInfo').textContent='Could not load replay.json (opening the page as a local file blocks it; serve the docs folder over HTTP).'});
+  function draw(){if(!R)return;const n=R.n,C=cv.width/n,t=+slider.value,st=R.steps[t];
+    document.getElementById('stepv').textContent=`t = ${t} s`;
+    g.fillStyle=css('--card');g.fillRect(0,0,cv.width,cv.height);
+    g.fillStyle='#5d6d7e';for(const[x,y]of R.blocked)g.fillRect(x*C,(n-1-y)*C,C,C);
+    g.strokeStyle=css('--ok');g.lineWidth=1.5;for(const[tx,ty]of st.known0)g.strokeRect(tx*4*C,(n-(ty+1)*4)*C,4*C,4*C);
+    g.fillStyle=css('--ok');g.fillRect(R.goal[0]*C,(n-1-R.goal[1])*C,C,C);g.fillStyle=css('--fg');g.fillRect(R.start[0]*C,(n-1-R.start[1])*C,C,C);
+    const P=([x,y])=>[x*C+C/2,(n-1-y)*C+C/2];
+    st.pos.forEach((p,i)=>{const[X,Y]=P(p),[hx,hy]=DIRS[st.heading[i]],a=Math.atan2(-hy,hx),h=R.half_angle*Math.PI/180;
+      g.fillStyle='rgba(36,113,163,.15)';g.beginPath();g.moveTo(X,Y);g.arc(X,Y,R.sensor_range*C,a-h,a+h);g.closePath();g.fill()});
+    g.strokeStyle='#e67e22';g.lineWidth=1.5;for(const[i,j]of st.edges){const[a,b]=P(st.pos[i]),[c,d]=P(st.pos[j]);g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.stroke()}
+    st.pos.forEach((p,i)=>{const[X,Y]=P(p);g.fillStyle=i?'#2471a3':'#1e8449';g.beginPath();g.arc(X,Y,C*0.55,0,7);g.fill()})}
+  slider.oninput=draw;
+  document.getElementById('play').onclick=e=>{if(timer){clearInterval(timer);timer=null;e.target.textContent='Play';return}
+    e.target.textContent='Pause';timer=setInterval(()=>{if(+slider.value>=+slider.max){slider.value=0}else slider.value=+slider.value+1;draw()},80)};
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+})();
+</script>
+</body>
+</html>
