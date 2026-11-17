@@ -1,0 +1,11 @@
+name = "formal"
+defaultTargets = ["V2"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "v4.36.0"
+
+[[lean_lib]]
+name = "V2"
+roots = ["v2_theorems"]

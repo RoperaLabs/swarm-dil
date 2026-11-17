@@ -1,0 +1,296 @@
+{
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17,
+  18,
+  19
+ ],
+ "configs": {
+  "none@120": {
+   "regret": {
+    "mean": 1.418,
+    "se": 0.386,
+    "p95": 4.556,
+    "p99": 6.296
+   },
+   "arrival": 0.9,
+   "kB": 0.0,
+   "memory_peak": 120
+  },
+  "flood@120": {
+   "regret": {
+    "mean": 3.726,
+    "se": 0.556,
+    "p95": 6.97,
+    "p99": 7.646
+   },
+   "arrival": 0.43,
+   "kB": 146.1,
+   "memory_peak": 120
+  },
+  "grace@120": {
+   "regret": {
+    "mean": 1.03,
+    "se": 0.242,
+    "p95": 3.184,
+    "p99": 3.83
+   },
+   "arrival": 0.825,
+   "kB": 14.3,
+   "memory_peak": 120
+  },
+  "cairn@120": {
+   "regret": {
+    "mean": 0.62,
+    "se": 0.123,
+    "p95": 1.871,
+    "p99": 2.292
+   },
+   "arrival": 0.925,
+   "kB": 29.5,
+   "memory_peak": 120
+  },
+  "none@unbounded": {
+   "regret": {
+    "mean": 0.781,
+    "se": 0.082,
+    "p95": 1.332,
+    "p99": 1.425
+   },
+   "arrival": 1.0,
+   "kB": 0.0,
+   "memory_peak": 750
+  },
+  "v2-silent": {
+   "regret": {
+    "mean": 1.263,
+    "se": 0.204,
+    "p95": 2.985,
+    "p99": 2.999
+   },
+   "arrival": 0.88,
+   "kB": 0.0,
+   "memory_peak": 228
+  },
+  "v2": {
+   "regret": {
+    "mean": 0.991,
+    "se": 0.144,
+    "p95": 2.145,
+    "p99": 2.193
+   },
+   "arrival": 0.915,
+   "kB": 13.3,
+   "memory_peak": 228
+  },
+  "v2-noescape": {
+   "regret": {
+    "mean": 0.892,
+    "se": 0.137,
+    "p95": 1.927,
+    "p99": 2.206
+   },
+   "arrival": 0.91,
+   "kB": 12.7,
+   "memory_peak": 228
+  },
+  "v2-fifo": {
+   "regret": {
+    "mean": 2.374,
+    "se": 0.324,
+    "p95": 4.697,
+    "p99": 5.084
+   },
+   "arrival": 0.615,
+   "kB": 15.6,
+   "memory_peak": 228
+  },
+  "v2-bvp": {
+   "regret": {
+    "mean": 2.122,
+    "se": 0.499,
+    "p95": 6.123,
+    "p99": 6.767
+   },
+   "arrival": 0.855,
+   "kB": 13.2,
+   "memory_peak": 228
+  },
+  "v2-nofutile": {
+   "regret": {
+    "mean": 1.02,
+    "se": 0.162,
+    "p95": 2.367,
+    "p99": 2.481
+   },
+   "arrival": 0.885,
+   "kB": 13.9,
+   "memory_peak": 228
+  },
+  "v2@K6": {
+   "regret": {
+    "mean": 2.985,
+    "se": 0.352,
+    "p95": 5.343,
+    "p99": 5.714
+   },
+   "arrival": 0.385,
+   "kB": 13.7,
+   "memory_peak": 162
+  },
+  "v2@T20000": {
+   "regret": {
+    "mean": 2.071,
+    "se": 0.808,
+    "p95": 3.964,
+    "p99": 14.175
+   },
+   "arrival": 1.0,
+   "kB": 22.9,
+   "memory_peak": 228
+  },
+  "v2@K6,T5000": {
+   "regret": {
+    "mean": 16.078,
+    "se": 3.276,
+    "p95": 42.342,
+    "p99": 48.017
+   },
+   "arrival": 0.87,
+   "kB": 67.3,
+   "memory_peak": 162
+  }
+ },
+ "v2_minus_other_regret": {
+  "v2-silent": {
+   "mean": -0.272,
+   "se": 0.155,
+   "p95": 0.527,
+   "p99": 1.363
+  },
+  "cairn@120": {
+   "mean": 0.371,
+   "se": 0.087,
+   "p95": 1.093,
+   "p99": 1.157
+  },
+  "grace@120": {
+   "mean": -0.039,
+   "se": 0.184,
+   "p95": 0.932,
+   "p99": 0.985
+  },
+  "flood@120": {
+   "mean": -2.735,
+   "se": 0.511,
+   "p95": 0.128,
+   "p99": 0.241
+  },
+  "none@120": {
+   "mean": -0.427,
+   "se": 0.335,
+   "p95": 0.791,
+   "p99": 1.404
+  },
+  "v2-noescape": {
+   "mean": 0.099,
+   "se": 0.045,
+   "p95": 0.507,
+   "p99": 0.568
+  },
+  "v2-fifo": {
+   "mean": -1.383,
+   "se": 0.253,
+   "p95": -0.145,
+   "p99": -0.125
+  },
+  "v2-bvp": {
+   "mean": -1.131,
+   "se": 0.383,
+   "p95": 0.262,
+   "p99": 0.404
+  },
+  "v2-nofutile": {
+   "mean": -0.029,
+   "se": 0.057,
+   "p95": 0.148,
+   "p99": 0.664
+  }
+ },
+ "eta_3d": 0.0204,
+ "constraints": {
+  "C1_bytes_per_voxel": {
+   "value": 0.641,
+   "target": "<= 0.7",
+   "ok": true
+  },
+  "C1_eta_ratio": {
+   "value": 1.048,
+   "target": ">= 0.5 (no loss against 2-D)",
+   "ok": true
+  },
+  "C2_ingest_cycles_p99": {
+   "value": 1456.1859999999995,
+   "target": "< 20000",
+   "ok": true
+  },
+  "C3_cycles_max": {
+   "value": 124152.0,
+   "target": "< 168000",
+   "ok": true,
+   "share_of_slots_over": 0.0
+  },
+  "C3_memory": {
+   "value": 228,
+   "target": "<= 256",
+   "ok": true
+  },
+  "C3_liveness_K12": {
+   "value": 1.0,
+   "target": "1.0 within 20000 slots",
+   "ok": true
+  },
+  "C3_stress_K6_5000": {
+   "value": 0.87,
+   "target": "report",
+   "ok": null
+  },
+  "C3_arrival_500_K12": {
+   "value": 0.915,
+   "target": "report",
+   "ok": null
+  },
+  "C3_arrival_500_K6": {
+   "value": 0.385,
+   "target": "report",
+   "ok": null
+  },
+  "C3_verified_route_fit": {
+   "value": 0.093,
+   "target": "report",
+   "ok": null
+  },
+  "C4_global_coordinate_bytes": {
+   "value": 0,
+   "target": "0",
+   "ok": true,
+   "evidence": "tests/math_verify_v2.py"
+  }
+ }
+}

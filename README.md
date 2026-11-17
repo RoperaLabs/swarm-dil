@@ -4,9 +4,91 @@
 
 | Version | Question | Main result |
 |---|---|---|
-| **v0.3** (this) | Which information should agents with tiny memories exchange, in how many bytes and how often, to cross unknown terrain from A to B? | **GRACE**, a protocol derived from the receivers' navigation decisions: same detour as flooding with **~3× fewer bytes**, and unlimited-memory performance with **64 bytes of map memory** |
+| **v2.0.0** (this) | Does GRACE survive the jump to 3-D on a microcontroller budget: 256 bytes of state, 1 ms per step, no GNSS? | **GRACE-3D 2.0.0**: 228 bytes of state, at most 0.74 ms per slot (operation-count model), 0 bytes of global coordinates, and the regret of GRACE ported to 3-D given 120 bytes of map alone, with every bound proved and the structural core checked in Lean 4 |
+| [v0.3](../../tree/v0.3.0) | Which information should agents with tiny memories exchange, in how many bytes and how often, to cross unknown terrain from A to B? | **GRACE**, a protocol derived from the receivers' navigation decisions: same detour as flooding with **~3× fewer bytes**, and unlimited-memory performance with **64 bytes of map memory** |
 | [v0.2](../../tree/v0.2.0) | Which coordination architecture survives a realistic radio, terrain, interference and bounded memory in an area search? | A single ridge makes central control 2.2× slower than a mesh |
 | [v0.1](../../tree/v0.1.0) | How much does message loss cost a search mission? | Bursty loss of 50 % makes central control 3.6× slower |
+
+# v2.0.0: GRACE-3D 2.0.0, in 228 bytes and 1 ms per slot
+
+📄 **[Technical report RL-TR-2026-04 (PDF, 30 pages): model, complete proofs and their derivation, pseudocode, measurements](paper/releases/TECH_NOTE_v2.pdf)** · [as Markdown](paper/releases/TECH_NOTE_v2.md) · [specification](docs/v2_spec.md) · [proofs and F4.5 audit](docs/v2_proofs.md) · [Lean 4](formal/v2_theorems.lean) · 🧪 **[3-D replay in the interactive explainer](https://roperalabs.github.io/swarm-dil/#grace3d)**
+
+![GRACE-3D 2.0.0: a swarm of ten drones crosses an unknown 3-D world; one drone is followed](results/v2/grace3d_swarm.gif)
+
+*The swarm at work (seed 2; regret 0.88, against a mean of 0.99 over the 20 terrains). One drone is followed in blue among its nine teammates. Orange radio links carry obstacle maps and grey ones short position messages; the orange blocks are the blue drone's whole map, 12 tiles. At slot 85 its plan becomes cheaper than the bound it has proved, so the plan must cross an obstacle it has just forgotten (red), and it escapes.*
+
+![The same terrain flown by GRACE-3D 2.0.0, GRACE ported to 3-D, CAIRN v0.4, flooding and silence](results/v2/grace3d_vs.gif)
+
+*The same terrain, radio and seed for five protocols. Flooding saturates the channel and no drone arrives; silence sends nothing; GRACE-3D 2.0.0 sends the least of those that talk. One terrain is one draw: on this one silence also brings all ten drones home with the same regret (0.88), while over the 20 terrains below its regret is 1.42 against 0.99. Both animations are drawn by [`experiments/v2_media.py`](experiments/v2_media.py) from the simulator's record of seeded missions; nothing is staged.*
+
+Ten agents cross an unknown **40×40×10 voxel** world (5 m voxels: towers, walls with one window, roofed pockets, floating slabs, mounds) from A to B, launched 10 slots apart. Each agent:
+
+- sees through **two 8×8 time-of-flight zone arrays** (front and side), so it only learns obstacle surfaces;
+- keeps **228 bytes** of persistent state: 12 map tiles of 4×4×4 voxels, an 8-waypoint plan, four cost bounds, a 9-entry neighbour table and a 12-waypoint walk record (plus a 16 KiB scratch arena);
+- gets **1 ms of a 168 MHz Cortex-M4** per slot, counted by an operation-cost model inside the agent;
+- talks over the v0.2 radio with **64-byte packets** whose 5-byte header carries **no global coordinate**.
+
+[`src/sim3d/agent.py`](src/sim3d/agent.py) imports nothing from the world, and a test checks it.
+
+## What is proved
+
+Complete proofs in [`docs/v2_proofs.md`](docs/v2_proofs.md). The structural core is mechanised in Lean 4 with Mathlib, with no `sorry`. The rest is checked with SymPy, Z3, exhaustive enumeration or Monte Carlo ([`tests/math_verify_v2.py`](tests/math_verify_v2.py)).
+
+| Result | Statement |
+|---|---|
+| exact 3-D metric | $h_3(d)=\delta_1+(\sqrt2-1)\delta_2+(\sqrt3-\sqrt2)\delta_3$ is the 26-connected lattice distance; nested-Bresenham segments are geodesics within one voxel of the line |
+| certificates | every partial value of a time-sliced A* is a sound lower bound on the true cost-to-go; forgetting a tile outside the informed ellipsoid changes no plan |
+| perception | $P$ zone reads per slot are necessary for any correct agent; the rest is $O(\lvert\Delta O\rvert)$ |
+| no GNSS | a 15-bit wrapped pose decodes exactly after up to 15 slots of silence; merging maps commutes with translation |
+| completeness | arrival with probability 1 for any memory bound and any received content; deterministic along a verified route; impossible deterministically for any finite-state agent (Budach's theorem, embedded in 3-D) |
+| futility | a plan cheaper than a sound lower bound crosses an obstacle the agent forgot, so the agent escapes at once (added after one post-empirical review) |
+
+## Results (20 paired terrains, 500 slots; regret = extra distance over the true shortest path)
+
+| Team of 10 | regret, mean ± s.e. | arrival | kB per mission | bounded memory per agent |
+|---|---|---|---|---|
+| **GRACE-3D 2.0.0** | **0.99 ± 0.14** | 91.5 % | 13.3 | **228 B in total** |
+| GRACE ported to 3-D | 1.03 ± 0.24 | 82.5 % | 14.3 | 120 B of map only |
+| CAIRN v0.4 | 0.62 ± 0.12 | 92.5 % | 29.5 | 120 B of map only |
+| flooding | 3.73 ± 0.56 | 43.0 % | 146.1 | 120 B of map only |
+| silence | 1.42 ± 0.39 | 90.0 % | 0 | 120 B of map only |
+
+![Detour against bytes along each protocol's front, and arrival against memory; means over 20 paired terrains with ±1 standard error](paper/releases/fig/planes.png)
+
+- **Within budget in every slot:** at most 124 954 cycles (0.74 ms of 1 ms) over 694 326 agent-slots, 228 B, 0 bytes of global coordinates, 0.641 tile bytes per obstacle voxel carried.
+- **Liveness:** all 200 agents of the 20 missions arrive within 20 000 slots; with only 6 tiles (60 B of map), 87 % arrive within 5000 slots.
+- **What carries the result:** oldest-first forgetting instead of the informed-set rule costs +1.38 of regret (on all 20 terrains), the box-visibility planner instead of the sliced exact search +1.13; both stay significant after Holm's correction for nine comparisons. Silencing the radio costs +0.27, which 20 terrains do not separate from zero.
+- **Against silence**, the mean regret is lower (0.99 against 1.42) but not on every terrain: talking removes the bad terrains (worst 2.21 against 6.73) rather than shortening every flight.
+- **CAIRN** reaches a lower regret with 2.2× the bytes, keeping protocol state beyond its 120 B map, by transferring routes in flight. The price sweep shows that GRACE-3D cannot buy that detour with bytes: its regret is lowest at the default price (0.99 at 13.3 kB) and does not fall with more traffic. Relaying routes is the next step.
+- **Memory:** within 256 B, 14 tiles (250 B) bring 99.5 % of the agents home within 500 slots against 91.5 % at the specified 12; below 9 tiles most agents are still flying at slot 500.
+
+Full tables, constraints and the one post-empirical review: [technical report](paper/releases/TECH_NOTE_v2.md), [`benchmarks/v2_results.json`](benchmarks/v2_results.json), [`benchmarks/v2_f45.json`](benchmarks/v2_f45.json).
+
+## Limitations
+
+- **Cycles are a model**, not a measurement on a microcontroller: no C port yet.
+- **Verified routes never reach the agents waiting at A in this schedule**: they travel one hop, and B is about 250 m from A. CAIRN's lower regret comes from transferring routes in flight; that is the next step.
+- **Local repair** in the Ramalingam–Reps sense needs a distance map the size of the world, which does not fit in 256 B. v2 instead re-plans exactly, from scratch, in the scratch arena.
+- **Tile budget:** K = 12 was fixed before the memory sweep; K = 14 looks better and needs its own pre-registered test.
+- **Synthetic world:** static obstacles, exact sensing and odometry, honest teammates, simulated radio.
+
+Between v0.3 and v2.0.0, v0.4 (CAIRN, *Certificate-Aware Information Relay for Navigation*: route claims with certified bounds) was a study and was not released on its own. It is included as the 3-D baselines: [`src/swarm_dil/nav3`](src/swarm_dil/nav3), [`experiments/v4_study.py`](experiments/v4_study.py), [`results/v4/`](results/v4).
+
+## Reproduce
+
+```bash
+pip install -e ".[test]"
+pytest -q                               # unit tests and the math checks
+cd formal && lake exe cache get && lake build && cd ..   # Lean 4.36 + Mathlib v4.36.0
+python benchmarks/eval_v2.py            # 20 paired seeds -> benchmarks/v2_results.json
+python benchmarks/sweep_v2.py           # the two main planes, 20 paired seeds per point -> benchmarks/v2_sweep.json
+python benchmarks/f45_v2.py             # the one post-empirical review -> benchmarks/v2_f45.json
+python experiments/v2_media.py          # the GIFs, the note's figures and the explainer's 3-D replay
+```
+
+Every mission is seeded, so every number, figure and frame is reproduced exactly.
+
+---
 
 # v0.3: GRACE, telling teammates only what changes their decision
 

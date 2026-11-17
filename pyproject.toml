@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swarm-dil"
-version = "0.3.0"
+version = "2.0.0"
 description = "Coordination and communication of memory- and bandwidth-limited UAV teams over degraded (DIL) links"
 readme = "README.md"
 license = "MIT"
@@ -14,4 +14,7 @@ dependencies = ["numpy>=1.24", "scipy>=1.11"]
 
 [project.optional-dependencies]
 plot = ["matplotlib>=3.7"]
-test = ["pytest>=7"]
+test = ["pytest>=7", "sympy>=1.12", "z3-solver>=4.12"]
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py", "math_verify_*.py"]

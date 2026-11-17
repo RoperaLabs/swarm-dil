@@ -1,0 +1,92 @@
+[
+ {
+  "protocol": "v2-nofutile",
+  "seed": 5,
+  "first_arrival": 67.0,
+  "commits": 0,
+  "verified_sent": 365,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ },
+ {
+  "protocol": "v2-nofutile",
+  "seed": 9,
+  "first_arrival": 60.0,
+  "commits": 0,
+  "verified_sent": 734,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ },
+ {
+  "protocol": "v2-nofutile",
+  "seed": 108,
+  "first_arrival": 79.0,
+  "commits": 0,
+  "verified_sent": 113,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ },
+ {
+  "protocol": "v2-nofutile",
+  "seed": 111,
+  "first_arrival": 85.0,
+  "commits": 0,
+  "verified_sent": 63,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ },
+ {
+  "protocol": "v2-nofutile",
+  "seed": 113,
+  "first_arrival": 65.0,
+  "commits": 0,
+  "verified_sent": 200,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ },
+ {
+  "protocol": "v2",
+  "seed": 5,
+  "first_arrival": 67.0,
+  "commits": 0,
+  "verified_sent": 365,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ },
+ {
+  "protocol": "v2",
+  "seed": 9,
+  "first_arrival": 60.0,
+  "commits": 0,
+  "verified_sent": 734,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ },
+ {
+  "protocol": "v2",
+  "seed": 108,
+  "first_arrival": 79.0,
+  "commits": 0,
+  "verified_sent": 113,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ },
+ {
+  "protocol": "v2",
+  "seed": 111,
+  "first_arrival": 85.0,
+  "commits": 0,
+  "verified_sent": 63,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ },
+ {
+  "protocol": "v2",
+  "seed": 113,
+  "first_arrival": 65.0,
+  "commits": 0,
+  "verified_sent": 160,
+  "packets_from_arrived_at_A": 0,
+  "verified_chunks_at_A": 0
+ }
+]

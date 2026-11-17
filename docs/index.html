@@ -32,7 +32,7 @@ button{font:inherit;padding:4px 12px;border-radius:6px;border:1px solid var(--li
 </head>
 <body>
 <main>
-<p class="pill">Ropera Labs · swarm-dil v0.3</p>
+<p class="pill">Ropera Labs · swarm-dil v2.0.0</p>
 <h1>GRACE: telling teammates only what changes their decision</h1>
 <p class="lead">A team of agents crosses unknown terrain from A to B. Each sees through a short vision cone, remembers a few hundred bytes, and talks over short, fading radio links. GRACE (<em>Goal-Relevant Adaptive Compressed Exchange</em>) decides what to send, in how many bytes and how many times, from the receivers' navigation decisions. Full derivations: <a href="theory/theory.pdf">technical report (PDF)</a> · code: <a href="https://github.com/RoperaLabs/swarm-dil">github.com/RoperaLabs/swarm-dil</a>.</p>
 
@@ -88,6 +88,19 @@ spacing for near-independence (ε = 0.1): τ ≥ <span class="out" id="tsp"></sp
 <img src="theory/fig/interference.png" alt="Detour and bytes against field interference">
 <img src="theory/fig/memory.png" alt="Detour and bytes against on-board memory">
 <img src="theory/fig/theory_checks.png" alt="Theory against Monte Carlo, and bytes per cell against tile size">
+
+<h2 id="grace3d">6 · GRACE-3D 2.0.0: the same idea in 3-D, in 228 bytes</h2>
+<p>The second version moves GRACE to a voxel world under a microcontroller budget. Each agent keeps <strong>228 bytes</strong> of state (twelve 4×4×4 map tiles, an 8-waypoint plan, four cost bounds, a table of teammates and a 12-waypoint walk record), spends at most <strong>1 ms of a 168 MHz Cortex-M4</strong> per one-second slot, and sends <strong>no global coordinate</strong>: poses travel modulo 32 voxels and decode exactly after up to 15 slots of silence. The lattice distance is exact,</p>
+$$h_3(d)=\delta_1+(\sqrt2-1)\,\delta_2+(\sqrt3-\sqrt2)\,\delta_3,$$
+<p>with $\delta_1\ge\delta_2\ge\delta_3$ the sorted displacements. Every value read from the agent's time-sliced A* is a sound lower bound $L$ on the true cost-to-go, and a plan that costs less than $L$ certainly crosses an obstacle the agent has forgotten, so the agent escapes at once. Statements and proofs: <a href="https://github.com/RoperaLabs/swarm-dil/blob/main/paper/releases/TECH_NOTE_v2.pdf">technical report RL-TR-2026-04 (PDF)</a>.</p>
+<div class="card">
+<canvas id="replay3d" width="640" height="440"></canvas>
+<p id="story3" style="min-height:3.2em;margin:.5em 0 .3em;font-weight:500"></p>
+<div><button id="play3">Play</button> <button id="jump3">Jump to the futility moment</button> <input id="step3" type="range" min="0" max="0" value="0" style="width:38%;vertical-align:middle"> <span class="out" id="step3v"></span></div>
+<label style="font-size:.9rem;color:var(--muted)">turn the view <input id="az3" type="range" min="0" max="359" value="302" style="width:40%;vertical-align:middle"></label>
+<p class="legend"><span style="background:#2a78d6"></span>the drone followed<span style="background:#898781"></span>its nine teammates<span style="background:#eb6834"></span>radio carrying obstacle maps, and the followed drone's 12 map tiles<span style="background:#c3c2b7"></span>short position messages<span style="background:#d03b3b"></span>the obstacle its plan crosses at the futility moment</p>
+<p id="replay3Info" class="lead"></p>
+</div>
 <p class="lead">Open research for dual-use applications such as search and rescue. Synthetic data only.</p>
 </main>
 
@@ -207,6 +220,75 @@ function descend(n,f,start,goal){const p=[[start[0],start[1],0]];let[x,y]=start,
   document.getElementById('play').onclick=e=>{if(timer){clearInterval(timer);timer=null;e.target.textContent='Play';return}
     e.target.textContent='Pause';timer=setInterval(()=>{if(+slider.value>=+slider.max){slider.value=0}else slider.value=+slider.value+1;draw()},80)};
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+})();
+
+// ---------------------------------------------------------------- widget 4: 3-D replay (GRACE-3D 2.0.0)
+(function(){
+  const cv=document.getElementById('replay3d'),g=cv.getContext('2d'),slider=document.getElementById('step3'),az=document.getElementById('az3');
+  const EL=0.55,BLUE='#2a78d6',ORANGE='#eb6834',RED='#d03b3b',MUTED='#898781',CHAT='#c3c2b7';
+  const STORY=[[0,'Ten drones must fly from A to B through an unknown 3-D world. None of them has a map.'],
+    [1,'They take off ten seconds apart. Each sees only a few metres ahead, and they talk by radio: orange links carry obstacle maps, grey ones short position messages.'],
+    [35,'Follow the blue drone. Its whole map is the 12 tiles it holds (orange boxes): with everything else it remembers, 228 bytes.'],
+    [61,'Every drone plans its own shortest route through what it knows, treating unknown space as free (dashed: the blue drone’s plan).'],
+    [73,'Teammates radio an obstacle only if it is worth its bytes to someone’s route. When the blue drone receives one, its map changes.'],
+    ['F+1','It escapes, then re-plans around every obstacle it meets, and flies on.'],
+    ['A','The blue drone has arrived. The others arrive too, each on a route of its own.'],
+    ['END','All ten arrived. Every drone used 228 bytes of memory and under 1 ms of computing per second, and no GPS coordinate ever went on the radio.']];
+  let R=null,timer=null,layer=null,view=null,ARR=0;
+  const dark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+  function camera(){const th=+az.value*Math.PI/180,c=Math.cos(th),s=Math.sin(th),ce=Math.cos(EL),se=Math.sin(EL),[nx,ny,nz]=R.shape;
+    const raw=(x,y,z)=>{const u=x*c-y*s,v=x*s+y*c;return[u,-(z*ce+v*se),v*ce-z*se]};
+    let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+    for(const X of[0,nx])for(const Y of[0,ny])for(const Z of[0,nz]){const[u,w]=raw(X,Y,Z);x0=Math.min(x0,u);x1=Math.max(x1,u);y0=Math.min(y0,w);y1=Math.max(y1,w)}
+    const k=Math.min((cv.width-30)/(x1-x0),(cv.height-30)/(y1-y0)),ox=(cv.width-k*(x1-x0))/2-k*x0,oy=(cv.height-k*(y1-y0))/2-k*y0;
+    return{k,P:(x,y,z)=>{const[u,w,d]=raw(x,y,z);return[ox+k*u,oy+k*w,d]}}}
+  function build(){view=camera();layer=document.createElement('canvas');layer.width=cv.width;layer.height=cv.height;
+    const h=layer.getContext('2d'),[nx,ny,nz]=R.shape,s=view.k*0.95;
+    h.strokeStyle=css('--line');h.lineWidth=1;h.beginPath();
+    [[0,0],[nx,0],[nx,ny],[0,ny],[0,0]].forEach(([x,y],i)=>{const[X,Y]=view.P(x,y,0);i?h.lineTo(X,Y):h.moveTo(X,Y)});h.stroke();
+    R.blocked.map(([x,y,z])=>{const[X,Y,d]=view.P(x+.5,y+.5,z+.5);return[X,Y,d,z]}).sort((a,b)=>b[2]-a[2])
+      .forEach(([X,Y,,z])=>{h.fillStyle=dark()?`hsla(50,4%,${24+18*z/nz}%,.55)`:`hsla(50,6%,${58+28*z/nz}%,.42)`;h.fillRect(X-s/2,Y-s/2,s,s)})}
+  function cube(x0,y0,z0,n){const E=[[0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,1],[1,1,1,0,1,1],[1,1,1,1,0,1],[1,1,1,1,1,0],
+      [1,0,0,1,1,0],[1,0,0,1,0,1],[0,1,0,1,1,0],[0,1,0,0,1,1],[0,0,1,1,0,1],[0,0,1,0,1,1]];
+    for(const e of E){const[a,b]=view.P(x0+e[0]*n,y0+e[1]*n,z0+e[2]*n),[c,d]=view.P(x0+e[3]*n,y0+e[4]*n,z0+e[5]*n);g.moveTo(a,b);g.lineTo(c,d)}}
+  function story(t){const F=R.futile.t-1,END=R.steps.length-1;
+    if(t===F)return `Futility: its plan costs Φ = ${R.futile.phi.toFixed(1)}, less than the lower bound L = ${R.futile.L.toFixed(1)} it has proved, so the plan must cross a real obstacle (red): one it held a second ago and evicted to make room. It escapes at once.`;
+    let s=STORY[0][1];
+    for(const[k,text]of STORY){const at=k==='F+1'?F+1:k==='A'?ARR:k==='END'?END:k;if(t>=at)s=text}
+    return s}
+  function draw(){if(!R)return;if(!layer)build();
+    const t=+slider.value,st=R.steps[t],H=R.hero,F=R.futile.t-1,C=p=>view.P(p[0]+.5,p[1]+.5,p[2]+.5);
+    document.getElementById('step3v').textContent=`slot ${t}`;
+    document.getElementById('story3').textContent=story(t);
+    g.fillStyle=css('--card');g.fillRect(0,0,cv.width,cv.height);g.drawImage(layer,0,0);
+    if(!st.arrived[H]){g.strokeStyle=ORANGE;g.globalAlpha=.8;g.lineWidth=1;g.beginPath();for(const[tx,ty,tz]of st.tiles)cube(4*tx,4*ty,4*tz,4);g.stroke();g.globalAlpha=1}
+    g.strokeStyle=MUTED;g.globalAlpha=.55;g.lineWidth=1;
+    for(let i=0;i<st.pos.length;i++){if(i===H)continue;const u0=Math.max(0,t-18);g.beginPath();
+      for(let u=u0;u<=t;u++){const[X,Y]=C(R.steps[u].pos[i]);u>u0?g.lineTo(X,Y):g.moveTo(X,Y)}g.stroke()}
+    for(const[i,j,m]of st.edges){const[a,b]=C(st.pos[i]),[c,d]=C(st.pos[j]);g.strokeStyle=m?ORANGE:CHAT;g.globalAlpha=m?.95:.7;g.lineWidth=m?1.7:1;
+      g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.stroke()}
+    g.globalAlpha=1;g.strokeStyle=BLUE;g.lineWidth=2.2;g.beginPath();
+    for(let u=0;u<=t;u++){const[X,Y]=C(R.steps[u].pos[H]);u?g.lineTo(X,Y):g.moveTo(X,Y)}g.stroke();
+    const plan=t===F?R.futile.plan:st.plan;
+    if(plan.length>1){g.setLineDash([5,3]);g.lineWidth=1.7;g.beginPath();plan.forEach((p,j)=>{const[X,Y]=C(p);j?g.lineTo(X,Y):g.moveTo(X,Y)});g.stroke();g.setLineDash([])}
+    if(t===F)for(const h of R.futile.hit){const[X,Y]=C(h);g.fillStyle=RED;g.fillRect(X-6,Y-6,12,12);g.strokeStyle=RED;g.lineWidth=2;
+      g.beginPath();g.arc(X,Y,12,0,7);g.stroke();g.fillStyle=css('--fg');g.font='bold 13px system-ui';g.fillText('forgotten obstacle',X+16,Y-12)}
+    const[ax,ay]=C(R.start),[bx,by]=C(R.goal);g.fillStyle=css('--fg');g.font='bold 13px system-ui';
+    g.fillText('A',ax+8,ay-8);g.fillText('B',bx+8,by-8);g.beginPath();g.arc(bx,by,5,0,7);g.fill();
+    st.pos.forEach((p,i)=>{if(i===H)return;const[X,Y]=C(p);g.fillStyle=MUTED;g.beginPath();g.arc(X,Y,3.6,0,7);g.fill();
+      g.strokeStyle=css('--card');g.lineWidth=1;g.stroke()});
+    const[hx,hy]=C(st.pos[H]);g.fillStyle=BLUE;g.beginPath();g.arc(hx,hy,6,0,7);g.fill();g.strokeStyle='#fff';g.lineWidth=1.6;g.stroke()}
+  function pause(){if(timer){clearInterval(timer);timer=null;document.getElementById('play3').textContent='Play'}}
+  fetch('replay3d.json').then(r=>r.json()).then(d=>{R=d;slider.max=d.steps.length-1;
+    ARR=d.steps.findIndex(s=>s.arrived[d.hero]);const last=d.steps[d.steps.length-1].arrived.reduce((a,b)=>a+b,0);
+    document.getElementById('replay3Info').textContent=`GRACE-3D 2.0.0, seed ${d.seed}: ${last} of ${d.steps[0].pos.length} drones arrived within ${d.steps.length} slots; team regret ${d.regret.toFixed(2)} (mean over the 20 bench terrains: 0.99); ${(d.bytes/1000).toFixed(1)} kB on the radio in total.`;draw()})
+   .catch(()=>{document.getElementById('replay3Info').textContent='Could not load replay3d.json (opening the page as a local file blocks it; serve the docs folder over HTTP).'});
+  slider.oninput=()=>{pause();draw()};az.oninput=()=>{layer=null;draw()};
+  document.getElementById('jump3').onclick=()=>{if(!R)return;pause();slider.value=R.futile.t-1;draw()};
+  document.getElementById('play3').onclick=e=>{if(timer){pause();return}
+    e.target.textContent='Pause';timer=setInterval(()=>{const t=+slider.value;if(t>=+slider.max){slider.value=0}else slider.value=t+1;draw();
+      if(+slider.value===R.futile.t-1){clearInterval(timer);timer=setTimeout(()=>{timer=null;document.getElementById('play3').click()},4500)}},120)};
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{layer=null;draw()});
 })();
 </script>
 </body>

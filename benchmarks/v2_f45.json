@@ -1,0 +1,174 @@
+{
+ "F4+loss": {
+  "metrics": {
+   "regret": {
+    "diff": 0.0806,
+    "se": 0.0478,
+    "p": 0.1,
+    "main": 0.1723,
+    "validation": -0.0111
+   },
+   "bytes": {
+    "diff": -2422.0,
+    "se": 681.1007,
+    "p": 0.001,
+    "main": -1406.0,
+    "validation": -3438.0
+   },
+   "cycles_p99": {
+    "diff": 17.798,
+    "se": 18.9229,
+    "p": 0.3527,
+    "main": 30.696,
+    "validation": 4.9
+   }
+  },
+  "arrival_diff": 0.0175,
+  "constraints_ok": true,
+  "improved": [
+   "bytes"
+  ],
+  "degraded": [],
+  "adopt": true
+ },
+ "F4+futile": {
+  "metrics": {
+   "regret": {
+    "diff": -0.0715,
+    "se": 0.0443,
+    "p": 0.1144,
+    "main": -0.0288,
+    "validation": -0.1143
+   },
+   "bytes": {
+    "diff": -1010.575,
+    "se": 362.2798,
+    "p": 0.0081,
+    "main": -561.0,
+    "validation": -1460.15
+   },
+   "cycles_p99": {
+    "diff": -17.529,
+    "se": 16.6872,
+    "p": 0.3,
+    "main": -6.329,
+    "validation": -28.729
+   }
+  },
+  "arrival_diff": 0.045,
+  "constraints_ok": true,
+  "improved": [
+   "bytes"
+  ],
+  "degraded": [],
+  "adopt": true
+ },
+ "F4+futile(p_esc=0.01)": {
+  "metrics": {
+   "regret": {
+    "diff": -0.1245,
+    "se": 0.0598,
+    "p": 0.0438,
+    "main": -0.1243,
+    "validation": -0.1247
+   },
+   "bytes": {
+    "diff": -1156.15,
+    "se": 434.7867,
+    "p": 0.0113,
+    "main": -1456.9,
+    "validation": -855.4
+   },
+   "cycles_p99": {
+    "diff": -11.1435,
+    "se": 20.9622,
+    "p": 0.598,
+    "main": -5.251,
+    "validation": -17.036
+   }
+  },
+  "arrival_diff": 0.05,
+  "constraints_ok": true,
+  "improved": [
+   "bytes"
+  ],
+  "degraded": [],
+  "adopt": true
+ },
+ "F4+loss+futile": {
+  "metrics": {
+   "regret": {
+    "diff": 0.1145,
+    "se": 0.0653,
+    "p": 0.0872,
+    "main": 0.2491,
+    "validation": -0.0201
+   },
+   "bytes": {
+    "diff": -2428.1,
+    "se": 741.7843,
+    "p": 0.0022,
+    "main": -1024.75,
+    "validation": -3831.45
+   },
+   "cycles_p99": {
+    "diff": -11.7185,
+    "se": 19.7014,
+    "p": 0.5554,
+    "main": -0.02,
+    "validation": -23.417
+   }
+  },
+  "arrival_diff": 0.04,
+  "constraints_ok": true,
+  "improved": [
+   "bytes"
+  ],
+  "degraded": [],
+  "adopt": true,
+  "worse_than_component": {
+   "F4+loss": [],
+   "F4+futile": [
+    "regret"
+   ]
+  }
+ },
+ "futile_variants": {
+  "regret": {
+   "diff": -0.053,
+   "se": 0.033,
+   "p": 0.1162,
+   "main": -0.0955,
+   "validation": -0.0104
+  },
+  "bytes": {
+   "diff": -145.575,
+   "se": 337.8268,
+   "p": 0.6689,
+   "main": -895.9,
+   "validation": 604.75
+  },
+  "cycles_p99": {
+   "diff": 6.3855,
+   "se": 13.5966,
+   "p": 0.6412,
+   "main": 1.078,
+   "validation": 11.693
+  },
+  "arrival": {
+   "diff": 0.005,
+   "se": 0.0134,
+   "p": 0.7105,
+   "main": 0.015,
+   "validation": -0.005
+  },
+  "escapes": {
+   "diff": -7.975,
+   "se": 1.5858,
+   "p": 0.0,
+   "main": -8.65,
+   "validation": -7.3
+  }
+ },
+ "decision": "F4+futile"
+}

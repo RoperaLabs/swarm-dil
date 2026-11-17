@@ -1,0 +1,634 @@
+{
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17,
+  18,
+  19
+ ],
+ "points": [
+  {
+   "study": "front",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "price",
+   "value": 0.25,
+   "kB": [
+    15.6699,
+    1.5856
+   ],
+   "regret": [
+    1.092,
+    0.1987
+   ],
+   "arrival": [
+    0.905,
+    0.0394
+   ],
+   "memory_bytes": 228
+  },
+  {
+   "study": "front",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "price",
+   "value": 0.5,
+   "kB": [
+    13.2954,
+    0.9513
+   ],
+   "regret": [
+    0.9911,
+    0.1439
+   ],
+   "arrival": [
+    0.915,
+    0.0233
+   ],
+   "memory_bytes": 228
+  },
+  {
+   "study": "front",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "price",
+   "value": 1,
+   "kB": [
+    11.1687,
+    0.9391
+   ],
+   "regret": [
+    1.1159,
+    0.1923
+   ],
+   "arrival": [
+    0.875,
+    0.0481
+   ],
+   "memory_bytes": 228
+  },
+  {
+   "study": "front",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "price",
+   "value": 2,
+   "kB": [
+    8.9638,
+    0.7094
+   ],
+   "regret": [
+    1.2165,
+    0.1961
+   ],
+   "arrival": [
+    0.875,
+    0.0446
+   ],
+   "memory_bytes": 228
+  },
+  {
+   "study": "front",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "price",
+   "value": 4,
+   "kB": [
+    7.6315,
+    0.6001
+   ],
+   "regret": [
+    1.4073,
+    0.2101
+   ],
+   "arrival": [
+    0.85,
+    0.0545
+   ],
+   "memory_bytes": 228
+  },
+  {
+   "study": "front",
+   "protocol": "GRACE ported to 3-D",
+   "param": "price",
+   "value": 0.5,
+   "kB": [
+    22.6532,
+    1.0192
+   ],
+   "regret": [
+    1.3407,
+    0.2807
+   ],
+   "arrival": [
+    0.765,
+    0.0494
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "front",
+   "protocol": "GRACE ported to 3-D",
+   "param": "price",
+   "value": 2,
+   "kB": [
+    14.3208,
+    1.0048
+   ],
+   "regret": [
+    1.0299,
+    0.2419
+   ],
+   "arrival": [
+    0.825,
+    0.0502
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "front",
+   "protocol": "GRACE ported to 3-D",
+   "param": "price",
+   "value": 10,
+   "kB": [
+    5.5172,
+    0.4281
+   ],
+   "regret": [
+    1.4024,
+    0.3641
+   ],
+   "arrival": [
+    0.88,
+    0.0579
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "front",
+   "protocol": "CAIRN v0.4",
+   "param": "price",
+   "value": 0.5,
+   "kB": [
+    33.991,
+    3.3887
+   ],
+   "regret": [
+    0.6965,
+    0.1252
+   ],
+   "arrival": [
+    0.895,
+    0.042
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "front",
+   "protocol": "CAIRN v0.4",
+   "param": "price",
+   "value": 2,
+   "kB": [
+    29.5197,
+    2.9553
+   ],
+   "regret": [
+    0.6204,
+    0.1231
+   ],
+   "arrival": [
+    0.925,
+    0.0289
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "front",
+   "protocol": "CAIRN v0.4",
+   "param": "price",
+   "value": 10,
+   "kB": [
+    26.0154,
+    2.402
+   ],
+   "regret": [
+    0.6358,
+    0.1106
+   ],
+   "arrival": [
+    0.93,
+    0.0242
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "front",
+   "protocol": "Flooding",
+   "param": "budget",
+   "value": 16,
+   "kB": [
+    65.647,
+    5.1304
+   ],
+   "regret": [
+    4.1567,
+    0.6618
+   ],
+   "arrival": [
+    0.43,
+    0.1024
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "front",
+   "protocol": "Flooding",
+   "param": "budget",
+   "value": 36,
+   "kB": [
+    146.091,
+    11.511
+   ],
+   "regret": [
+    3.7263,
+    0.5555
+   ],
+   "arrival": [
+    0.43,
+    0.0968
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "front",
+   "protocol": "Flooding",
+   "param": "budget",
+   "value": 66,
+   "kB": [
+    281.0465,
+    18.2035
+   ],
+   "regret": [
+    3.2181,
+    0.4368
+   ],
+   "arrival": [
+    0.385,
+    0.0938
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "front",
+   "protocol": "Silence",
+   "param": "-",
+   "value": 0,
+   "kB": [
+    0.0,
+    0.0
+   ],
+   "regret": [
+    1.4178,
+    0.3859
+   ],
+   "arrival": [
+    0.9,
+    0.0585
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "memory",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "K",
+   "value": 3,
+   "kB": [
+    12.1813,
+    0.4545
+   ],
+   "regret": [
+    2.9844,
+    0.2759
+   ],
+   "arrival": [
+    0.295,
+    0.0724
+   ],
+   "memory_bytes": 129
+  },
+  {
+   "study": "memory",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "K",
+   "value": 6,
+   "kB": [
+    13.7286,
+    0.8242
+   ],
+   "regret": [
+    2.9845,
+    0.3519
+   ],
+   "arrival": [
+    0.385,
+    0.0812
+   ],
+   "memory_bytes": 162
+  },
+  {
+   "study": "memory",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "K",
+   "value": 9,
+   "kB": [
+    15.5785,
+    1.2654
+   ],
+   "regret": [
+    2.1911,
+    0.3234
+   ],
+   "arrival": [
+    0.615,
+    0.0772
+   ],
+   "memory_bytes": 195
+  },
+  {
+   "study": "memory",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "K",
+   "value": 12,
+   "kB": [
+    13.2954,
+    0.9513
+   ],
+   "regret": [
+    0.9911,
+    0.1439
+   ],
+   "arrival": [
+    0.915,
+    0.0233
+   ],
+   "memory_bytes": 228
+  },
+  {
+   "study": "memory",
+   "protocol": "GRACE-3D 2.0.0",
+   "param": "K",
+   "value": 14,
+   "kB": [
+    12.7315,
+    0.9069
+   ],
+   "regret": [
+    0.7293,
+    0.0977
+   ],
+   "arrival": [
+    0.995,
+    0.005
+   ],
+   "memory_bytes": 250
+  },
+  {
+   "study": "memory",
+   "protocol": "Silence",
+   "param": "map_bytes",
+   "value": 60,
+   "kB": [
+    0.0,
+    0.0
+   ],
+   "regret": [
+    1.0677,
+    0.4095
+   ],
+   "arrival": [
+    0.275,
+    0.0992
+   ],
+   "memory_bytes": 60
+  },
+  {
+   "study": "memory",
+   "protocol": "Silence",
+   "param": "map_bytes",
+   "value": 120,
+   "kB": [
+    0.0,
+    0.0
+   ],
+   "regret": [
+    1.4178,
+    0.3859
+   ],
+   "arrival": [
+    0.9,
+    0.0585
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "memory",
+   "protocol": "Silence",
+   "param": "map_bytes",
+   "value": 240,
+   "kB": [
+    0.0,
+    0.0
+   ],
+   "regret": [
+    0.7812,
+    0.0824
+   ],
+   "arrival": [
+    1.0,
+    0.0
+   ],
+   "memory_bytes": 240
+  },
+  {
+   "study": "memory",
+   "protocol": "GRACE ported to 3-D",
+   "param": "map_bytes",
+   "value": 60,
+   "kB": [
+    11.7319,
+    0.4697
+   ],
+   "regret": [
+    1.1381,
+    0.3058
+   ],
+   "arrival": [
+    0.265,
+    0.0789
+   ],
+   "memory_bytes": 60
+  },
+  {
+   "study": "memory",
+   "protocol": "GRACE ported to 3-D",
+   "param": "map_bytes",
+   "value": 120,
+   "kB": [
+    14.3208,
+    1.0048
+   ],
+   "regret": [
+    1.0299,
+    0.2419
+   ],
+   "arrival": [
+    0.825,
+    0.0502
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "memory",
+   "protocol": "GRACE ported to 3-D",
+   "param": "map_bytes",
+   "value": 240,
+   "kB": [
+    14.0031,
+    0.9586
+   ],
+   "regret": [
+    0.5604,
+    0.0781
+   ],
+   "arrival": [
+    1.0,
+    0.0
+   ],
+   "memory_bytes": 240
+  },
+  {
+   "study": "memory",
+   "protocol": "CAIRN v0.4",
+   "param": "map_bytes",
+   "value": 60,
+   "kB": [
+    44.125,
+    4.862
+   ],
+   "regret": [
+    1.0015,
+    0.2407
+   ],
+   "arrival": [
+    0.275,
+    0.075
+   ],
+   "memory_bytes": 60
+  },
+  {
+   "study": "memory",
+   "protocol": "CAIRN v0.4",
+   "param": "map_bytes",
+   "value": 120,
+   "kB": [
+    29.5197,
+    2.9553
+   ],
+   "regret": [
+    0.6204,
+    0.1231
+   ],
+   "arrival": [
+    0.925,
+    0.0289
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "memory",
+   "protocol": "CAIRN v0.4",
+   "param": "map_bytes",
+   "value": 240,
+   "kB": [
+    24.8394,
+    1.3474
+   ],
+   "regret": [
+    0.4634,
+    0.0488
+   ],
+   "arrival": [
+    1.0,
+    0.0
+   ],
+   "memory_bytes": 240
+  },
+  {
+   "study": "memory",
+   "protocol": "Flooding",
+   "param": "map_bytes",
+   "value": 60,
+   "kB": [
+    165.3275,
+    7.3848
+   ],
+   "regret": [
+    2.4773,
+    0.4005
+   ],
+   "arrival": [
+    0.155,
+    0.0816
+   ],
+   "memory_bytes": 60
+  },
+  {
+   "study": "memory",
+   "protocol": "Flooding",
+   "param": "map_bytes",
+   "value": 120,
+   "kB": [
+    146.091,
+    11.511
+   ],
+   "regret": [
+    3.7263,
+    0.5555
+   ],
+   "arrival": [
+    0.43,
+    0.0968
+   ],
+   "memory_bytes": 120
+  },
+  {
+   "study": "memory",
+   "protocol": "Flooding",
+   "param": "map_bytes",
+   "value": 240,
+   "kB": [
+    100.677,
+    10.1389
+   ],
+   "regret": [
+    1.399,
+    0.2492
+   ],
+   "arrival": [
+    0.98,
+    0.0117
+   ],
+   "memory_bytes": 240
+  }
+ ]
+}
